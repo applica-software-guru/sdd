@@ -1,0 +1,113 @@
+{
+  "name": "sdd-vscode",
+  "version": "0.1.0",
+  "displayName": "SDD - Story Driven Development",
+  "description": "VSCode extension for Story Driven Development",
+  "publisher": "applica-software-guru",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": [
+    "workspaceContains:.sdd/config.yaml"
+  ],
+  "main": "./dist/extension.js",
+  "scripts": {
+    "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node"
+  },
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "sdd-explorer",
+          "title": "SDD",
+          "icon": "$(book)"
+        }
+      ]
+    },
+    "views": {
+      "sdd-explorer": [
+        {
+          "id": "sdd.storyExplorer",
+          "name": "Story Explorer",
+          "when": "sdd:projectDetected"
+        },
+        {
+          "id": "sdd.crExplorer",
+          "name": "Change Requests",
+          "when": "sdd:projectDetected"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "sdd.sync",
+        "title": "SDD: Sync"
+      },
+      {
+        "command": "sdd.build",
+        "title": "SDD: Build"
+      },
+      {
+        "command": "sdd.status",
+        "title": "SDD: Status"
+      },
+      {
+        "command": "sdd.markSynced",
+        "title": "SDD: Mark Synced"
+      },
+      {
+        "command": "sdd.validate",
+        "title": "SDD: Validate"
+      },
+      {
+        "command": "sdd.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "sdd.crList",
+        "title": "SDD: CR List"
+      },
+      {
+        "command": "sdd.crPending",
+        "title": "SDD: CR Pending"
+      },
+      {
+        "command": "sdd.markCRApplied",
+        "title": "SDD: Mark CR Applied"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "sdd.refresh",
+          "when": "view == sdd.storyExplorer",
+          "group": "navigation"
+        },
+        {
+          "command": "sdd.refresh",
+          "when": "view == sdd.crExplorer",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "sdd.markSynced",
+          "when": "view == sdd.storyExplorer && viewItem == pending"
+        },
+        {
+          "command": "sdd.markCRApplied",
+          "when": "view == sdd.crExplorer && viewItem == draft"
+        }
+      ]
+    }
+  },
+  "dependencies": {
+    "@applica-software-guru/sdd-core": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.24.0"
+  }
+}

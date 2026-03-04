@@ -1,0 +1,21 @@
+{
+  "name": "@applica-software-guru/sdd",
+  "version": "0.1.0",
+  "description": "CLI for Story Driven Development",
+  "main": "dist/index.js",
+  "bin": {
+    "sdd": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.0.0",
+    "@applica-software-guru/sdd-core": "^0.1.0",
+    "chalk": "^4.1.2",
+    "cli-table3": "^0.6.5",
+    "clipboardy": "^2.3.0",
+    "commander": "^13.0.0",
+    "ora": "^5.4.1"
+  }
+}

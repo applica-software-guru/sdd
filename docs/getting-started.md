@@ -115,3 +115,4 @@ See [Agent Workflow](agent-workflow.md) for the complete guide.
 - [Concepts](concepts.md) — understand status lifecycle and project structure
 - [CLI Reference](cli-reference.md) — all available commands
 - [Change Requests](change-requests.md) — structured change management
+- [Bugs](bugs.md) — bug tracking for the agent

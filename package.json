@@ -1,6 +1,7 @@
 {
   "name": "sdd-monorepo",
   "private": true,
+  "author": "Bruno Fortunato <bruno.fortunato@applica.guru>",
   "workspaces": [
     "packages/*"
   ],

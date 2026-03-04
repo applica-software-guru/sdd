@@ -1,8 +1,9 @@
 {
   "name": "sdd-vscode",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "displayName": "SDD - Story Driven Development",
   "description": "VSCode extension for Story Driven Development",
+  "author": "Bruno Fortunato <bruno.fortunato@applica.guru>",
   "publisher": "applica-software-guru",
   "engines": {
     "vscode": "^1.85.0"
@@ -104,7 +105,7 @@
     }
   },
   "dependencies": {
-    "@applica-software-guru/sdd-core": "^0.1.0"
+    "@applica-software-guru/sdd-core": "^0.2.0"
   },
   "devDependencies": {
     "@types/vscode": "^1.85.0",

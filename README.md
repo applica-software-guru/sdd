@@ -10,7 +10,7 @@ So what's the real language we're using? **The Story.**
 
 Not the User Story in the agile sense. Something bigger. The complete narrative of a system: what it does, for whom, why it exists, how it behaves, what happens at the edges. Functional flows, entity models, behavioral rules — all written as a coherent, living document before a single line of code is generated.
 
-**Story Driven Development** is a methodology and toolchain where structured documentation drives implementation. You write the Story, the agent writes the code.
+**Story Driven Development** is a methodology and a lightweight toolchain that supports agentic development through structured documentation. It's not a framework — it's a thin layer that connects your narrative to your coding agent. You write the Story, the agent writes the code.
 
 ## Why SDD?
 
@@ -70,6 +70,10 @@ You write the Story    →    SDD detects changes    →    Agent implements cod
 | `@applica-software-guru/sdd-core` | Core library — parser, prompt generator, status engine |
 | `@applica-software-guru/sdd` | CLI tool |
 | `sdd-vscode` | VS Code extension |
+
+## Author
+
+**Bruno Fortunato** — [bruno.fortunato@applica.guru](mailto:bruno.fortunato@applica.guru)
 
 ## License
 

@@ -1,7 +1,8 @@
 {
   "name": "@applica-software-guru/sdd",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "CLI for Story Driven Development",
+  "author": "Bruno Fortunato <bruno.fortunato@applica.guru>",
   "main": "dist/index.js",
   "bin": {
     "sdd": "./dist/index.js"
@@ -11,7 +12,7 @@
   },
   "dependencies": {
     "@inquirer/prompts": "^7.0.0",
-    "@applica-software-guru/sdd-core": "^0.1.0",
+    "@applica-software-guru/sdd-core": "^0.2.0",
     "chalk": "^4.1.2",
     "cli-table3": "^0.6.5",
     "clipboardy": "^2.3.0",

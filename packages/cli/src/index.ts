@@ -13,7 +13,7 @@ const program = new Command();
 program
   .name('sdd')
   .description('Story Driven Development — manage apps through structured documentation')
-  .version('0.1.0');
+  .version('0.2.0');
 
 registerInit(program);
 registerStatus(program);

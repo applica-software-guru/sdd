@@ -95,8 +95,22 @@ sdd mark-synced
 4. Repeat
 ```
 
+## Bootstrap with an agent
+
+Instead of writing all documentation manually, use `--bootstrap` to let an agent generate it:
+
+```bash
+sdd init my-project --bootstrap
+cd my-project
+```
+
+This creates the project and copies a bootstrap prompt to your clipboard. Paste it into your coding agent (Claude Code, Copilot, Cursor). The agent will ask you questions about your project and generate all the initial documentation.
+
+See [Agent Workflow](agent-workflow.md) for the complete guide.
+
 ## Next steps
 
+- [Agent Workflow](agent-workflow.md) — full guide for using SDD with a coding agent
 - [Concepts](concepts.md) — understand status lifecycle and project structure
 - [CLI Reference](cli-reference.md) — all available commands
 - [Change Requests](change-requests.md) — structured change management

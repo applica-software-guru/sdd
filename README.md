@@ -56,6 +56,7 @@ You write the Story    →    SDD detects changes    →    Agent implements cod
 ## Documentation
 
 - [Getting Started](docs/getting-started.md) — installation, first project, workflow
+- [Agent Workflow](docs/agent-workflow.md) — using SDD with Claude Code, Copilot, Cursor
 - [Concepts](docs/concepts.md) — how SDD works, status lifecycle, project structure
 - [CLI Reference](docs/cli-reference.md) — all commands and options
 - [Change Requests](docs/change-requests.md) — structured change management

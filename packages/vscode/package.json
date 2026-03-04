@@ -5,6 +5,11 @@
   "description": "VSCode extension for Story Driven Development",
   "author": "Bruno Fortunato <bruno.fortunato@applica.guru>",
   "publisher": "applica-software-guru",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/applica-software-guru/sdd"
+  },
+  "license": "MIT",
   "engines": {
     "vscode": "^1.85.0"
   },

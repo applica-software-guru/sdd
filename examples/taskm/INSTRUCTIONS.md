@@ -5,12 +5,14 @@ Documentation drives implementation: read the docs first, then write code.
 
 ## Workflow
 
-1. Run `sdd cr pending` — check if there are change requests to process first
-2. If there are pending CRs, apply them to the docs, then run `sdd mark-cr-applied`
-3. Run `sdd sync` to see what needs to be implemented
-4. Read the documentation files listed in the sync output
-5. Implement what each file describes, writing code inside `code/`
-6. After implementing, mark files as synced:
+1. Run `sdd bug open` — check if there are open bugs to fix first
+2. If there are open bugs, fix the code/docs, then run `sdd mark-bug-resolved`
+3. Run `sdd cr pending` — check if there are change requests to process
+4. If there are pending CRs, apply them to the docs, then run `sdd mark-cr-applied`
+5. Run `sdd sync` to see what needs to be implemented
+6. Read the documentation files listed in the sync output
+7. Implement what each file describes, writing code inside `code/`
+8. After implementing, mark files as synced:
 
 ```
 sdd mark-synced product/features/auth.md
@@ -22,7 +24,7 @@ Or mark all pending files at once:
 sdd mark-synced
 ```
 
-7. **Commit immediately after mark-synced** — this is mandatory:
+9. **Commit immediately after mark-synced** — this is mandatory:
 
 ```
 git add -A && git commit -m "sdd sync: <brief description of what was implemented>"
@@ -39,17 +41,20 @@ Delete the related code in `code/`, then run `sdd mark-synced <file>` (the doc f
 
 - `sdd status` — See all documentation files and their state (new/changed/deleted/synced)
 - `sdd diff` — See what changed since last sync
-- `sdd sync` — Get the sync prompt for pending files (new/changed/deleted)
+- `sdd sync` — Get the sync prompt for pending files (includes git diff for changed files)
 - `sdd validate` — Check for broken references and issues
 - `sdd mark-synced [files...]` — Mark specific files (or all) as synced
 - `sdd cr list` — List all change requests with their status
 - `sdd cr pending` — Show draft change requests to process
 - `sdd mark-cr-applied [files...]` — Mark change requests as applied
+- `sdd bug list` — List all bugs with their status
+- `sdd bug open` — Show open bugs to fix
+- `sdd mark-bug-resolved [files...]` — Mark bugs as resolved
 
 ## Rules
 
 1. **Always commit after mark-synced** — run `git add -A && git commit -m "sdd sync: ..."` immediately after `sdd mark-synced`. Never leave synced files uncommitted.
-2. Before running `sdd sync`, check for pending change requests with `sdd cr pending`
+2. Before running `sdd sync`, check for open bugs with `sdd bug open` and pending change requests with `sdd cr pending`
 3. If there are pending CRs, apply them to the docs first, then mark them with `sdd mark-cr-applied`
 4. Only implement what the sync prompt asks for
 5. All generated code goes inside `code/`
@@ -77,6 +82,16 @@ version: "1.0"
   - `synced` — already implemented, up to date
 - **version**: patch-bump on each edit (1.0 → 1.1 → 1.2)
 - **last-modified**: ISO 8601 datetime, updated on each edit
+
+## How sync works
+
+`sdd sync` generates a structured prompt for the agent based on pending files:
+
+- **`new` files**: the agent reads the full documentation and implements it from scratch
+- **`changed` files**: SDD uses `git diff` to compute what changed in the documentation since the last commit, and includes the diff in the sync prompt — this way the agent sees exactly what was modified and can update only the affected code
+- **`deleted` files**: the agent removes the related code
+
+This is why **committing after every mark-synced is mandatory** — the git history is what SDD uses to detect changes.
 
 ## Change Requests
 
@@ -107,6 +122,36 @@ created-at: "2025-01-01T00:00:00.000Z"
 - `sdd cr list` — See all change requests and their status
 - `sdd cr pending` — Show only draft CRs to process
 - `sdd mark-cr-applied [files...]` — Mark CRs as applied after updating the docs
+
+## Bugs
+
+Bugs are markdown files in `bugs/` that describe problems found in the codebase.
+
+### Bug format
+
+```yaml
+---
+title: "Login fails with empty password"
+status: open
+author: "user"
+created-at: "2025-01-01T00:00:00.000Z"
+---
+```
+
+- **status**: `open` (needs fixing) or `resolved` (already fixed)
+
+### Bug workflow
+
+1. Check for open bugs: `sdd bug open`
+2. Read each open bug and fix the code and/or documentation
+3. After fixing a bug, mark it: `sdd mark-bug-resolved bugs/BUG-001.md`
+4. Commit the fix
+
+### Bug commands
+
+- `sdd bug list` — See all bugs and their status
+- `sdd bug open` — Show only open bugs to fix
+- `sdd mark-bug-resolved [files...]` — Mark bugs as resolved after fixing
 
 ## UX and screenshots
 
@@ -139,4 +184,5 @@ Both formats work — use a folder only when you have screenshots or multiple fi
 - `system/` — How to build it (entities, architecture, tech stack, interfaces)
 - `code/` — All generated source code goes here
 - `change-requests/` — Change requests to the documentation
+- `bugs/` — Bug reports
 - `.sdd/` — Project config and sync state (do not edit)

@@ -32,7 +32,10 @@ This changes the role of the developer. You stop thinking in functions and start
 ## Quick Start
 
 ```bash
-# Install
+# Install via Homebrew (macOS)
+brew install applica-software-guru/sdd/sdd
+
+# Install via npm (all platforms)
 npm install -g @applica-software-guru/sdd
 
 # Create a new project

@@ -3,6 +3,10 @@
 ## Installation
 
 ```bash
+# Via Homebrew (macOS)
+brew install applica-software-guru/sdd/sdd
+
+# Via npm (all platforms)
 npm install -g @applica-software-guru/sdd
 ```
 

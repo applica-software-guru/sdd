@@ -1,0 +1,76 @@
+name: Update Homebrew Formula
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version number to publish (e.g. 1.2.3)"
+        required: true
+        type: string
+
+jobs:
+  update-formula:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Calculate SHA256 of npm tarball
+        id: sha
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          URL="https://registry.npmjs.org/@applica-software-guru/sdd/-/sdd-${VERSION}.tgz"
+          SHA256=$(curl -sL "$URL" | sha256sum | awk '{print $1}')
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Update formula in tap repository
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          script: |
+            const version = '${{ steps.sha.outputs.version }}';
+            const url = '${{ steps.sha.outputs.url }}';
+            const sha256 = '${{ steps.sha.outputs.sha256 }}';
+
+            const formula = `class Sdd < Formula
+              desc "CLI for Story Driven Development"
+              homepage "https://github.com/applica-software-guru/sdd"
+              url "${url}"
+              sha256 "${sha256}"
+              license "MIT"
+
+              depends_on "node"
+
+              def install
+                system "npm", "install", *std_npm_args
+                bin.install_symlink libexec.glob("bin/*")
+              end
+
+              test do
+                assert_match version.to_s, shell_output("\#{bin}/sdd --version")
+              end
+            end
+            `.replace(/^            /gm, '');
+
+            // Get current file (if exists) to obtain its SHA for update
+            let fileSha;
+            try {
+              const { data } = await github.rest.repos.getContent({
+                owner: 'applica-software-guru',
+                repo: 'homebrew-sdd',
+                path: 'Formula/sdd.rb',
+              });
+              fileSha = data.sha;
+            } catch (e) {
+              // File doesn't exist yet — will be created
+            }
+
+            await github.rest.repos.createOrUpdateFileContents({
+              owner: 'applica-software-guru',
+              repo: 'homebrew-sdd',
+              path: 'Formula/sdd.rb',
+              message: `Update sdd formula to ${version}`,
+              content: Buffer.from(formula).toString('base64'),
+              sha: fileSha,
+            });
+
+            console.log(`Formula updated to version ${version}`);

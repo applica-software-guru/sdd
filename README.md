@@ -60,6 +60,14 @@ You write the Story    →    SDD detects changes    →    Agent implements cod
 4. **The agent implements** what the documentation describes
 5. **`sdd mark-synced`** marks files as done, then you commit
 
+## SDD and Spec-Driven Development
+
+SDD is an implementation of [Spec-Driven Development](https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html) — the practice of treating specifications as the primary artifact, with code as a derived layer.
+
+Martin Fowler identifies a spectrum: from *spec-first* (write specs once, generate code) to *spec-anchored* (specs evolve with the codebase) to *spec-as-source* (only specs are edited by humans). SDD targets the **spec-anchored** and **spec-as-source** ends: the status lifecycle (`new → synced → changed`) and git-diff-based sync are designed to keep the Story as the persistent source of truth across the full lifetime of a project — not just at initialization.
+
+The key difference from other spec-driven tools is scope and lifecycle: SDD covers the full product narrative — vision, users, features, entities, architecture — not just API contracts or data schemas. And rather than generating code once, the status lifecycle and git-diff-based sync are designed to keep specs and code aligned continuously.
+
 ## Documentation
 
 - [Getting Started](docs/getting-started.md) — installation, first project, workflow

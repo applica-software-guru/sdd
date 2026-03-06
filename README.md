@@ -64,7 +64,7 @@ You write the Story    →    SDD detects changes    →    Agent implements cod
 
 SDD is an implementation of [Spec-Driven Development](https://martinfowler.com/articles/exploring-gen-ai/sdd-3-tools.html) — the practice of treating specifications as the primary artifact, with code as a derived layer.
 
-Martin Fowler identifies a spectrum: from *spec-first* (write specs once, generate code) to *spec-anchored* (specs evolve with the codebase) to *spec-as-source* (only specs are edited by humans). SDD targets the **spec-anchored** and **spec-as-source** ends: the status lifecycle (`new → synced → changed`) and git-diff-based sync are designed to keep the Story as the persistent source of truth across the full lifetime of a project — not just at initialization.
+Martin Fowler identifies a spectrum: from _spec-first_ (write specs once, generate code) to _spec-anchored_ (specs evolve with the codebase) to _spec-as-source_ (only specs are edited by humans). SDD targets the **spec-anchored** and **spec-as-source** ends: the status lifecycle (`new → synced → changed`) and git-diff-based sync are designed to keep the Story as the persistent source of truth across the full lifetime of a project — not just at initialization.
 
 The key difference from other spec-driven tools is scope and lifecycle: SDD covers the full product narrative — vision, users, features, entities, architecture — not just API contracts or data schemas. And rather than generating code once, the status lifecycle and git-diff-based sync are designed to keep specs and code aligned continuously.
 
@@ -80,11 +80,21 @@ The key difference from other spec-driven tools is scope and lifecycle: SDD cove
 
 ## Packages
 
-| Package | Description |
-|---------|-------------|
+| Package                           | Description                                            |
+| --------------------------------- | ------------------------------------------------------ |
 | `@applica-software-guru/sdd-core` | Core library — parser, prompt generator, status engine |
-| `@applica-software-guru/sdd` | CLI tool |
-| `sdd-vscode` | VS Code extension |
+| `@applica-software-guru/sdd`      | CLI tool                                               |
+| `sdd-vscode`                      | VS Code extension                                      |
+
+## Maintainers
+
+Homebrew sync is automated via GitHub Actions.
+
+When a GitHub Release is published, `.github/workflows/sync-homebrew-tap.yml` updates `Formula/sdd.rb` in the tap repository (`applica-software-guru/homebrew-sdd`).
+
+Required secret in this repository:
+
+- `HOMEBREW_TAP_TOKEN`: GitHub token with write access to `applica-software-guru/homebrew-sdd`
 
 ## Author
 

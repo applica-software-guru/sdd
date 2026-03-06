@@ -59,7 +59,7 @@ Repository: `applica-software-guru/sdd`
 
 Minimum token capabilities:
 
-- `NPM_TOKEN`: publish permission for package `@applica-software-guru/sdd`
+- `NPM_TOKEN`: npm automation token (or granular token with 2FA bypass) with publish permission for `@applica-software-guru/sdd`
 - Access to repository `applica-software-guru/homebrew-sdd`
 - Permission `Contents: Read and write`
 - If org enforces SSO, token must be authorized for SSO
@@ -73,6 +73,8 @@ Minimum token capabilities:
 ### npm publish fails with auth errors
 
 `NPM_TOKEN` is missing/invalid, or does not have publish permission for `@applica-software-guru/sdd`.
+
+If npm account/org enforces 2FA for publish, use an automation token (or granular token with 2FA bypass enabled), otherwise CI publish fails with 403.
 
 ### `Resource not accessible by personal access token` (403)
 

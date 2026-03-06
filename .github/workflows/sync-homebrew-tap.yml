@@ -71,8 +71,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build packages
-        run: npm run build
+      - name: Build core and CLI
+        run: |
+          npm run build --workspace @applica-software-guru/sdd-core
+          npm run build --workspace @applica-software-guru/sdd
 
       - name: Validate CLI version
         shell: bash

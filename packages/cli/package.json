@@ -1,6 +1,6 @@
 {
   "name": "@applica-software-guru/sdd",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "CLI for Story Driven Development",
   "author": "Bruno Fortunato <bruno.fortunato@applica.guru>",
   "main": "dist/index.js",

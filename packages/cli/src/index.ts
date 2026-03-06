@@ -11,8 +11,8 @@ import { registerCR } from './commands/cr.js';
 import { registerBug } from './commands/bug.js';
 import { registerApply } from './commands/apply.js';
 
-const require = createRequire(__filename);
-const packageJson = require('../package.json') as { version: string };
+const packageRequire = createRequire(__filename);
+const packageJson = packageRequire('../package.json') as { version: string };
 
 const program = new Command();
 

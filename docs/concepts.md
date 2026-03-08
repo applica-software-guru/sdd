@@ -113,17 +113,10 @@ my-project/
   code/                     # all generated source code
   change-requests/          # change requests
   bugs/                     # bug reports
-  INSTRUCTIONS.md           # agent instructions (auto-generated)
+  .claude/skills/sdd/
+    SKILL.md              # agent skill file (auto-generated)
 ```
 
 ## Agent compatibility
 
-`sdd init` creates pointer files for popular coding agents:
-
-| Agent | File | Content |
-|-------|------|---------|
-| Claude Code | `.claude/CLAUDE.md` | Points to `INSTRUCTIONS.md` |
-| GitHub Copilot | `.github/copilot-instructions.md` | Points to `INSTRUCTIONS.md` |
-| Cursor | `.cursorrules` | Points to `INSTRUCTIONS.md` |
-
-All instructions live in `INSTRUCTIONS.md` — a single source of truth.
+`sdd init` creates a skill file at `.claude/skills/sdd/SKILL.md` using the [agentskills.io](https://agentskills.io) standard format. This format is automatically recognized by 30+ coding agents, including Claude Code, GitHub Copilot, Cursor, and others. No extra pointer files are needed.

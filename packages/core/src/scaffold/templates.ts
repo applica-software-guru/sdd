@@ -17,12 +17,29 @@ export interface ProjectInfo {
   description: string;
 }
 
-export const AGENT_MD_TEMPLATE = `# SDD Project
+export const SKILL_MD_TEMPLATE = `---
+name: sdd
+description: >
+  Story Driven Development workflow. Use when working in a project
+  with .sdd/config.yaml, or when the user mentions SDD, sdd sync,
+  story driven development, or spec-driven development.
+license: MIT
+compatibility: Requires sdd CLI (npm i -g @applica-software-guru/sdd)
+allowed-tools: Bash(sdd:*) Read Glob Grep
+metadata:
+  author: applica-software-guru
+  version: "1.0"
+---
 
-This project uses **Story Driven Development (SDD)**.
-Documentation drives implementation: read the docs first, then write code.
+# SDD — Story Driven Development
+
+## Detection
+
+This project uses SDD if \`.sdd/config.yaml\` exists in the project root.
 
 ## Workflow
+
+Follow this loop every time you work on an SDD project:
 
 1. Run \`sdd bug open\` — check if there are open bugs to fix first
 2. If there are open bugs, fix the code/docs, then run \`sdd mark-bug-resolved\`
@@ -80,7 +97,27 @@ Delete the related code in \`code/\`, then run \`sdd mark-synced <file>\` (the d
 6. Respect all constraints in \`## Agent Notes\` sections (if present)
 7. Do not edit files inside \`.sdd/\` manually
 
-## File format
+## Project structure
+
+- \`product/\` — What to build (vision, users, features)
+- \`system/\` — How to build it (entities, architecture, tech stack, interfaces)
+- \`code/\` — All generated source code goes here
+- \`change-requests/\` — Change requests to the documentation
+- \`bugs/\` — Bug reports
+- \`.sdd/\` — Project config and sync state (do not edit)
+
+## References
+
+For detailed information on specific topics, see:
+
+- [File format and status lifecycle](references/file-format.md)
+- [Change Requests workflow](references/change-requests.md)
+- [Bug workflow](references/bugs.md)
+`;
+
+export const FILE_FORMAT_REFERENCE = `# File Format and Status Lifecycle
+
+## YAML Frontmatter
 
 Every \`.md\` file in \`product/\` and \`system/\` must start with this YAML frontmatter:
 
@@ -94,13 +131,20 @@ version: "1.0"
 ---
 \`\`\`
 
-- **status**: one of:
-  - \`new\` — new file, needs to be implemented
-  - \`changed\` — modified since last sync, code needs updating
-  - \`deleted\` — feature to be removed, agent should delete related code
-  - \`synced\` — already implemented, up to date
-- **version**: patch-bump on each edit (1.0 → 1.1 → 1.2)
-- **last-modified**: ISO 8601 datetime, updated on each edit
+## Status values
+
+- **\`new\`** — new file, needs to be implemented
+- **\`changed\`** — modified since last sync, code needs updating
+- **\`deleted\`** — feature to be removed, agent should delete related code
+- **\`synced\`** — already implemented, up to date
+
+## Version
+
+Patch-bump on each edit: 1.0 → 1.1 → 1.2
+
+## Last-modified
+
+ISO 8601 datetime, updated on each edit.
 
 ## How sync works
 
@@ -111,66 +155,6 @@ version: "1.0"
 - **\`deleted\` files**: the agent removes the related code
 
 This is why **committing after every mark-synced is mandatory** — the git history is what SDD uses to detect changes.
-
-## Change Requests
-
-Change Requests (CRs) are markdown files in \`change-requests/\` that describe modifications to the documentation.
-
-### CR format
-
-\`\`\`yaml
----
-title: "Add authentication feature"
-status: draft
-author: "user"
-created-at: "2025-01-01T00:00:00.000Z"
----
-\`\`\`
-
-- **status**: \`draft\` (pending) or \`applied\` (already processed)
-
-### CR workflow
-
-1. Check for pending CRs: \`sdd cr pending\`
-2. Read each pending CR and apply the described changes to the documentation files (marking them as \`new\`, \`changed\`, or \`deleted\`)
-3. After applying a CR to the docs, mark it: \`sdd mark-cr-applied change-requests/CR-001.md\`
-4. Then run \`sdd sync\` to implement the code changes
-
-### CR commands
-
-- \`sdd cr list\` — See all change requests and their status
-- \`sdd cr pending\` — Show only draft CRs to process
-- \`sdd mark-cr-applied [files...]\` — Mark CRs as applied after updating the docs
-
-## Bugs
-
-Bugs are markdown files in \`bugs/\` that describe problems found in the codebase.
-
-### Bug format
-
-\`\`\`yaml
----
-title: "Login fails with empty password"
-status: open
-author: "user"
-created-at: "2025-01-01T00:00:00.000Z"
----
-\`\`\`
-
-- **status**: \`open\` (needs fixing) or \`resolved\` (already fixed)
-
-### Bug workflow
-
-1. Check for open bugs: \`sdd bug open\`
-2. Read each open bug and fix the code and/or documentation
-3. After fixing a bug, mark it: \`sdd mark-bug-resolved bugs/BUG-001.md\`
-4. Commit the fix
-
-### Bug commands
-
-- \`sdd bug list\` — See all bugs and their status
-- \`sdd bug open\` — Show only open bugs to fix
-- \`sdd mark-bug-resolved [files...]\` — Mark bugs as resolved after fixing
 
 ## UX and screenshots
 
@@ -196,15 +180,68 @@ Reference images in the markdown with relative paths:
 \`\`\`
 
 Both formats work — use a folder only when you have screenshots or multiple files for a feature.
+`;
 
-## Project structure
+export const CHANGE_REQUESTS_REFERENCE = `# Change Requests
 
-- \`product/\` — What to build (vision, users, features)
-- \`system/\` — How to build it (entities, architecture, tech stack, interfaces)
-- \`code/\` — All generated source code goes here
-- \`change-requests/\` — Change requests to the documentation
-- \`bugs/\` — Bug reports
-- \`.sdd/\` — Project config and sync state (do not edit)
+Change Requests (CRs) are markdown files in \`change-requests/\` that describe modifications to the documentation.
+
+## CR format
+
+\`\`\`yaml
+---
+title: "Add authentication feature"
+status: draft
+author: "user"
+created-at: "2025-01-01T00:00:00.000Z"
+---
+\`\`\`
+
+- **status**: \`draft\` (pending) or \`applied\` (already processed)
+
+## CR workflow
+
+1. Check for pending CRs: \`sdd cr pending\`
+2. Read each pending CR and apply the described changes to the documentation files (marking them as \`new\`, \`changed\`, or \`deleted\`)
+3. After applying a CR to the docs, mark it: \`sdd mark-cr-applied change-requests/CR-001.md\`
+4. Then run \`sdd sync\` to implement the code changes
+
+## CR commands
+
+- \`sdd cr list\` — See all change requests and their status
+- \`sdd cr pending\` — Show only draft CRs to process
+- \`sdd mark-cr-applied [files...]\` — Mark CRs as applied after updating the docs
+`;
+
+export const BUGS_REFERENCE = `# Bugs
+
+Bugs are markdown files in \`bugs/\` that describe problems found in the codebase.
+
+## Bug format
+
+\`\`\`yaml
+---
+title: "Login fails with empty password"
+status: open
+author: "user"
+created-at: "2025-01-01T00:00:00.000Z"
+---
+\`\`\`
+
+- **status**: \`open\` (needs fixing) or \`resolved\` (already fixed)
+
+## Bug workflow
+
+1. Check for open bugs: \`sdd bug open\`
+2. Read each open bug and fix the code and/or documentation
+3. After fixing a bug, mark it: \`sdd mark-bug-resolved bugs/BUG-001.md\`
+4. Commit the fix
+
+## Bug commands
+
+- \`sdd bug list\` — See all bugs and their status
+- \`sdd bug open\` — Show only open bugs to fix
+- \`sdd mark-bug-resolved [files...]\` — Mark bugs as resolved after fixing
 `;
 
 export const EMPTY_LOCK_TEMPLATE = () => `synced-at: "${new Date().toISOString()}"

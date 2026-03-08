@@ -1,7 +1,13 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { AGENT_MD_TEMPLATE, type ProjectInfo } from './templates.js';
+import {
+  SKILL_MD_TEMPLATE,
+  FILE_FORMAT_REFERENCE,
+  CHANGE_REQUESTS_REFERENCE,
+  BUGS_REFERENCE,
+  type ProjectInfo,
+} from './templates.js';
 import { writeConfig, sddDirPath } from '../config/config-manager.js';
 import { isGitRepo, gitInit } from '../git/git.js';
 import type { SDDConfig } from '../types.js';
@@ -37,34 +43,27 @@ export async function initProject(root: string, info?: ProjectInfo): Promise<str
     }
   }
 
-  // Create agent instructions
-  const instructionsPath = resolve(root, 'INSTRUCTIONS.md');
-  if (!existsSync(instructionsPath)) {
-    await writeFile(instructionsPath, AGENT_MD_TEMPLATE, 'utf-8');
-    createdFiles.push('INSTRUCTIONS.md');
+  // Create agent skill
+  const skillDir = resolve(root, '.claude/skills/sdd');
+  const refsDir = resolve(skillDir, 'references');
+
+  if (!existsSync(refsDir)) {
+    await mkdir(refsDir, { recursive: true });
   }
 
-  // Create agent instruction pointers
-  const POINTER = 'Read INSTRUCTIONS.md in the project root for all instructions.\n';
-  const agentFiles: Array<{ path: string; dir?: string }> = [
-    { path: '.claude/CLAUDE.md', dir: '.claude' },
-    { path: '.github/copilot-instructions.md', dir: '.github' },
-    { path: '.cursorrules' },
+  const skillFiles: Array<{ path: string; content: string }> = [
+    { path: '.claude/skills/sdd/SKILL.md', content: SKILL_MD_TEMPLATE },
+    { path: '.claude/skills/sdd/references/file-format.md', content: FILE_FORMAT_REFERENCE },
+    { path: '.claude/skills/sdd/references/change-requests.md', content: CHANGE_REQUESTS_REFERENCE },
+    { path: '.claude/skills/sdd/references/bugs.md', content: BUGS_REFERENCE },
   ];
 
-  for (const entry of agentFiles) {
+  for (const entry of skillFiles) {
     const absPath = resolve(root, entry.path);
-    if (existsSync(absPath)) continue;
-
-    if (entry.dir) {
-      const absDir = resolve(root, entry.dir);
-      if (!existsSync(absDir)) {
-        await mkdir(absDir, { recursive: true });
-      }
+    if (!existsSync(absPath)) {
+      await writeFile(absPath, entry.content, 'utf-8');
+      createdFiles.push(entry.path);
     }
-
-    await writeFile(absPath, POINTER, 'utf-8');
-    createdFiles.push(entry.path);
   }
 
   return createdFiles;

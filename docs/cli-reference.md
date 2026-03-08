@@ -15,7 +15,7 @@ Interactive wizard that asks:
 2. Which agent to use (Claude Code, Codex, OpenCode, or custom)
 3. How to start: write docs manually, generate bootstrap prompt, or generate and apply automatically
 
-Creates the project directory with `.sdd/`, `product/`, `system/`, `code/`, `change-requests/`, `INSTRUCTIONS.md`, and agent pointer files.
+Creates the project directory with `.sdd/`, `product/`, `system/`, `code/`, `change-requests/`, and `.claude/skills/sdd/SKILL.md`.
 
 ## Status & sync
 

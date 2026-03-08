@@ -10,11 +10,11 @@ import { printBanner } from '../ui/banner.js';
 import { success, info, heading } from '../ui/format.js';
 import { renderMarkdown } from '../ui/markdown.js';
 
-const START_PROMPT = `Read INSTRUCTIONS.md and the documentation in product/ and system/, then run \`sdd sync\` to start working.`;
+const START_PROMPT = `Read .claude/skills/sdd/SKILL.md and the documentation in product/ and system/, then run \`sdd sync\` to start working.`;
 
 function buildBootstrapPrompt(description: string, auto: boolean): string {
   if (auto) {
-    return `Read INSTRUCTIONS.md first. This is a new SDD project.
+    return `Read .claude/skills/sdd/SKILL.md first. This is a new SDD project.
 
 Project goal: "${description}"
 
@@ -28,10 +28,10 @@ Your task: generate the initial documentation for this project based on the desc
 - system/tech-stack.md — Technologies and frameworks
 - system/interfaces.md — API contracts
 
-Follow the file format described in INSTRUCTIONS.md for the YAML frontmatter. Do NOT write any code, only documentation. Commit all created files when done.`;
+Follow the file format described in .claude/skills/sdd/references/file-format.md for the YAML frontmatter. Do NOT write any code, only documentation. Commit all created files when done.`;
   }
 
-  return `Read INSTRUCTIONS.md first. This is a new SDD project.
+  return `Read .claude/skills/sdd/SKILL.md first. This is a new SDD project.
 
 Project goal: "${description}"
 
@@ -45,7 +45,7 @@ Your task: generate the initial documentation for this project. Ask me a few que
 - system/tech-stack.md — Technologies and frameworks
 - system/interfaces.md — API contracts
 
-Follow the file format described in INSTRUCTIONS.md for the YAML frontmatter. Do NOT write any code, only documentation.`;
+Follow the file format described in .claude/skills/sdd/references/file-format.md for the YAML frontmatter. Do NOT write any code, only documentation.`;
 }
 
 export function registerInit(program: Command): void {
@@ -201,7 +201,7 @@ export function registerInit(program: Command): void {
       console.log(`  ${chalk.white('1.')} Enter the project folder:\n`);
       console.log(`     ${chalk.green(`cd ${projectName}`)}\n`);
       console.log(`  ${chalk.white('2.')} Start writing your documentation in ${chalk.cyan('product/')} and ${chalk.cyan('system/')}.`);
-      console.log(`     Check ${chalk.cyan('INSTRUCTIONS.md')} for the file format.\n`);
+      console.log(`     Check ${chalk.cyan('.claude/skills/sdd/SKILL.md')} for the workflow.\n`);
       console.log(`  ${chalk.white('3.')} When ready, let your AI agent run:\n`);
       console.log(`     ${chalk.green('sdd sync')}\n`);
 

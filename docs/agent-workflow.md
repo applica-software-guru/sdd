@@ -4,7 +4,7 @@ This guide shows how to use SDD with Claude Code. The same workflow applies to a
 
 ## Overview
 
-SDD projects are designed to be driven by an agent. The agent reads `INSTRUCTIONS.md`, understands the workflow, and executes `sdd` commands autonomously. You write the Story, the agent writes the code.
+SDD projects are designed to be driven by an agent. The agent reads `.claude/skills/sdd/SKILL.md`, understands the workflow, and executes `sdd` commands autonomously. You write the Story, the agent writes the code.
 
 ## Step 1: Create the project
 
@@ -21,7 +21,7 @@ The prompt is automatically copied to your clipboard.
 
 Open Claude Code (or your agent) in the project directory and paste the bootstrap prompt. The agent will:
 
-1. Read `INSTRUCTIONS.md` to understand SDD
+1. Read `.claude/skills/sdd/SKILL.md` to understand SDD
 2. Ask you questions about your project (target users, main features, technical preferences)
 3. Generate all the documentation files:
    - `product/vision.md` — what you're building and why
@@ -57,7 +57,7 @@ The agent will:
 5. Run `sdd mark-synced` to mark files as done
 6. Commit the changes
 
-That's it. The agent follows the workflow described in `INSTRUCTIONS.md` autonomously.
+That's it. The agent follows the workflow described in `.claude/skills/sdd/SKILL.md` autonomously.
 
 ## Step 5: Iterate
 
@@ -141,13 +141,4 @@ The agent reads the CR, updates the docs, marks the CR as applied, and then sync
 
 ## Agent compatibility
 
-SDD works with any agent that can read files and run terminal commands:
-
-| Agent | Setup |
-|-------|-------|
-| **Claude Code** | `sdd init` creates `.claude/CLAUDE.md` — Claude reads it automatically |
-| **GitHub Copilot** | `sdd init` creates `.github/copilot-instructions.md` — Copilot reads it automatically |
-| **Cursor** | `sdd init` creates `.cursorrules` — Cursor reads it automatically |
-| **Others** | Point the agent to `INSTRUCTIONS.md` manually |
-
-All pointer files redirect to `INSTRUCTIONS.md` — a single source of truth.
+SDD uses the [agentskills.io](https://agentskills.io) standard format. The skill file at `.claude/skills/sdd/SKILL.md` is automatically recognized by 30+ coding agents, including Claude Code, GitHub Copilot, Cursor, and others. No extra pointer files are needed.

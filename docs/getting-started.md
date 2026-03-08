@@ -23,10 +23,8 @@ This creates:
 my-project/
   .sdd/config.yaml          # project config
   .git/                     # git repo (auto-initialized)
-  INSTRUCTIONS.md           # agent instructions
-  .claude/CLAUDE.md         # Claude Code pointer
-  .github/copilot-instructions.md  # Copilot pointer
-  .cursorrules              # Cursor pointer
+  .claude/skills/sdd/
+    SKILL.md               # agent skill file (agentskills.io format)
   product/                  # what to build
     features/
   system/                   # how to build it

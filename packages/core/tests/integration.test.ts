@@ -39,12 +39,16 @@ describe('SDD integration', () => {
 
     const created = await sdd.init({ description: 'A test app' });
     expect(created).toContain('.sdd/config.yaml');
-    expect(created).toContain('INSTRUCTIONS.md');
+    expect(created).toContain('.claude/skills/sdd/SKILL.md');
     expect(existsSync(join(tempDir, '.sdd'))).toBe(true);
     expect(existsSync(join(tempDir, '.git'))).toBe(true);
     expect(existsSync(join(tempDir, 'product'))).toBe(true);
     expect(existsSync(join(tempDir, 'system'))).toBe(true);
     expect(existsSync(join(tempDir, 'code'))).toBe(true);
+    expect(existsSync(join(tempDir, '.claude/skills/sdd/SKILL.md'))).toBe(true);
+    expect(existsSync(join(tempDir, '.claude/skills/sdd/references/file-format.md'))).toBe(true);
+    expect(existsSync(join(tempDir, '.claude/skills/sdd/references/change-requests.md'))).toBe(true);
+    expect(existsSync(join(tempDir, '.claude/skills/sdd/references/bugs.md'))).toBe(true);
 
     const config = await sdd.config();
     expect(config.description).toBe('A test app');
@@ -122,11 +126,11 @@ describe('SDD integration', () => {
     await expect(sdd.status()).rejects.toThrow('No SDD project found');
   });
 
-  it('init is idempotent for INSTRUCTIONS.md', async () => {
+  it('init is idempotent for SKILL.md', async () => {
     const sdd = new SDD({ root: tempDir });
     const first = await sdd.init({ description: 'test' });
     const second = await sdd.init({ description: 'test' });
-    expect(first).toContain('INSTRUCTIONS.md');
-    expect(second).not.toContain('INSTRUCTIONS.md');
+    expect(first).toContain('.claude/skills/sdd/SKILL.md');
+    expect(second).not.toContain('.claude/skills/sdd/SKILL.md');
   });
 });

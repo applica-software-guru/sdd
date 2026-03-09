@@ -15,7 +15,36 @@ Interactive wizard that asks:
 2. Which agent to use (Claude Code, Codex, OpenCode, or custom)
 3. How to start: write docs manually, generate bootstrap prompt, or generate and apply automatically
 
-Creates the project directory with `.sdd/`, `product/`, `system/`, `code/`, `change-requests/`, and `.claude/skills/sdd/SKILL.md`.
+Creates the project directory with `.sdd/`, `product/`, `system/`, `code/`, `change-requests/`, canonical skill files in `.sdd/skill/sdd/`, and agent adapters (including `.claude/skills/sdd/SKILL.md`).
+
+### `sdd adapters sync`
+
+Create or update agent adapter files for projects already initialized with SDD.
+
+```bash
+# Configure all supported adapters
+sdd adapters sync --all
+
+# Configure only specific adapters
+sdd adapters sync --agents claude,copilot,cursor
+
+# Preview changes without writing files
+sdd adapters sync --all --dry-run
+```
+
+Useful options:
+- `--all` — configure all supported adapters
+- `--agents <list>` — configure only specific adapters
+- `--dry-run` — print planned changes only
+- `--force` — overwrite existing adapter files when they differ
+
+### `sdd adapters list`
+
+List all supported adapters, their mode (`pointer` or `mirror`), and target file paths.
+
+```bash
+sdd adapters list
+```
 
 ## Status & sync
 

@@ -6,7 +6,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces",
+    "build": "npm run build -w @applica-software-guru/sdd-core && npm run build -w @applica-software-guru/sdd && npm run build -w sdd-vscode",
     "test": "vitest run",
     "test:watch": "vitest"
   },

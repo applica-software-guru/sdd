@@ -11,6 +11,12 @@ import { isSDDProject, readConfig, writeConfig } from './config/config-manager.j
 import { parseAllCRFiles } from './parser/cr-parser.js';
 import { parseAllBugFiles } from './parser/bug-parser.js';
 import type { ProjectInfo } from './scaffold/templates.js';
+import {
+  listSupportedAdapters,
+  syncSkillAdapters,
+  type SyncAdaptersOptions,
+  type SyncAdaptersResult,
+} from './scaffold/skill-adapters.js';
 
 export class SDD {
   private root: string;
@@ -21,6 +27,15 @@ export class SDD {
 
   async init(info?: ProjectInfo): Promise<string[]> {
     return initProject(this.root, info);
+  }
+
+  async syncAdapters(options?: SyncAdaptersOptions): Promise<SyncAdaptersResult> {
+    this.ensureInitialized();
+    return syncSkillAdapters(this.root, options);
+  }
+
+  supportedAdapters(): string[] {
+    return listSupportedAdapters();
   }
 
   async config(): Promise<SDDConfig> {

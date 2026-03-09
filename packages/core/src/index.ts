@@ -23,3 +23,12 @@ export { isSDDProject, readConfig, writeConfig } from './config/config-manager.j
 export { runAgent } from './agent/agent-runner.js';
 export type { AgentRunnerOptions } from './agent/agent-runner.js';
 export { DEFAULT_AGENTS, resolveAgentCommand } from './agent/agent-defaults.js';
+export { listSupportedAdapters, SKILL_ADAPTERS, syncSkillAdapters } from './scaffold/skill-adapters.js';
+export type {
+  AdapterMode,
+  SkillAdapterDefinition,
+  SyncAdaptersOptions,
+  AdapterFileAction,
+  AdapterFileChange,
+  SyncAdaptersResult,
+} from './scaffold/skill-adapters.js';

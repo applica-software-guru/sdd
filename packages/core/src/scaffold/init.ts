@@ -1,13 +1,8 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import {
-  SKILL_MD_TEMPLATE,
-  FILE_FORMAT_REFERENCE,
-  CHANGE_REQUESTS_REFERENCE,
-  BUGS_REFERENCE,
-  type ProjectInfo,
-} from './templates.js';
+import { type ProjectInfo } from './templates.js';
+import { syncSkillAdapters } from './skill-adapters.js';
 import { writeConfig, sddDirPath } from '../config/config-manager.js';
 import { isGitRepo, gitInit } from '../git/git.js';
 import type { SDDConfig } from '../types.js';
@@ -43,26 +38,11 @@ export async function initProject(root: string, info?: ProjectInfo): Promise<str
     }
   }
 
-  // Create agent skill
-  const skillDir = resolve(root, '.claude/skills/sdd');
-  const refsDir = resolve(skillDir, 'references');
-
-  if (!existsSync(refsDir)) {
-    await mkdir(refsDir, { recursive: true });
-  }
-
-  const skillFiles: Array<{ path: string; content: string }> = [
-    { path: '.claude/skills/sdd/SKILL.md', content: SKILL_MD_TEMPLATE },
-    { path: '.claude/skills/sdd/references/file-format.md', content: FILE_FORMAT_REFERENCE },
-    { path: '.claude/skills/sdd/references/change-requests.md', content: CHANGE_REQUESTS_REFERENCE },
-    { path: '.claude/skills/sdd/references/bugs.md', content: BUGS_REFERENCE },
-  ];
-
-  for (const entry of skillFiles) {
-    const absPath = resolve(root, entry.path);
-    if (!existsSync(absPath)) {
-      await writeFile(absPath, entry.content, 'utf-8');
-      createdFiles.push(entry.path);
+  // Create canonical skill and agent adapters
+  const adapters = await syncSkillAdapters(root);
+  for (const change of [...adapters.canonical, ...adapters.adapters]) {
+    if (change.action === 'created') {
+      createdFiles.push(change.path);
     }
   }
 

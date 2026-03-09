@@ -39,12 +39,17 @@ describe('SDD integration', () => {
 
     const created = await sdd.init({ description: 'A test app' });
     expect(created).toContain('.sdd/config.yaml');
+    expect(created).toContain('.sdd/skill/sdd/SKILL.md');
     expect(created).toContain('.claude/skills/sdd/SKILL.md');
     expect(existsSync(join(tempDir, '.sdd'))).toBe(true);
     expect(existsSync(join(tempDir, '.git'))).toBe(true);
     expect(existsSync(join(tempDir, 'product'))).toBe(true);
     expect(existsSync(join(tempDir, 'system'))).toBe(true);
     expect(existsSync(join(tempDir, 'code'))).toBe(true);
+    expect(existsSync(join(tempDir, '.sdd/skill/sdd/SKILL.md'))).toBe(true);
+    expect(existsSync(join(tempDir, '.sdd/skill/sdd/references/file-format.md'))).toBe(true);
+    expect(existsSync(join(tempDir, '.sdd/skill/sdd/references/change-requests.md'))).toBe(true);
+    expect(existsSync(join(tempDir, '.sdd/skill/sdd/references/bugs.md'))).toBe(true);
     expect(existsSync(join(tempDir, '.claude/skills/sdd/SKILL.md'))).toBe(true);
     expect(existsSync(join(tempDir, '.claude/skills/sdd/references/file-format.md'))).toBe(true);
     expect(existsSync(join(tempDir, '.claude/skills/sdd/references/change-requests.md'))).toBe(true);
@@ -126,11 +131,25 @@ describe('SDD integration', () => {
     await expect(sdd.status()).rejects.toThrow('No SDD project found');
   });
 
-  it('init is idempotent for SKILL.md', async () => {
+  it('init is idempotent for canonical and adapter skill files', async () => {
     const sdd = new SDD({ root: tempDir });
     const first = await sdd.init({ description: 'test' });
     const second = await sdd.init({ description: 'test' });
+    expect(first).toContain('.sdd/skill/sdd/SKILL.md');
     expect(first).toContain('.claude/skills/sdd/SKILL.md');
+    expect(second).not.toContain('.sdd/skill/sdd/SKILL.md');
     expect(second).not.toContain('.claude/skills/sdd/SKILL.md');
+  });
+
+  it('syncAdapters supports dry-run and selective adapters', async () => {
+    const sdd = new SDD({ root: tempDir });
+    await sdd.init({ description: 'test' });
+
+    const dryRun = await sdd.syncAdapters({ agents: ['copilot'], dryRun: true });
+    expect(dryRun.selectedAgents).toEqual(['copilot']);
+    expect(dryRun.adapters.some((c) => c.path === '.github/copilot-instructions.md')).toBe(true);
+
+    await sdd.syncAdapters({ agents: ['copilot'] });
+    expect(existsSync(join(tempDir, '.github/copilot-instructions.md'))).toBe(true);
   });
 });

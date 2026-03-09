@@ -119,4 +119,4 @@ my-project/
 
 ## Agent compatibility
 
-`sdd init` creates a skill file at `.claude/skills/sdd/SKILL.md` using the [agentskills.io](https://agentskills.io) standard format. This format is automatically recognized by 30+ coding agents, including Claude Code, GitHub Copilot, Cursor, and others. No extra pointer files are needed.
+`sdd init` creates a canonical skill at `.sdd/skill/sdd/SKILL.md` using the [agentskills.io](https://agentskills.io) standard format, then generates adapter files for major agents. Use `sdd adapters sync` to configure adapters in existing projects.

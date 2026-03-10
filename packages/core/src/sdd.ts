@@ -1,16 +1,22 @@
-import { readFile, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
-import type { StoryStatus, ValidationResult, SDDConfig, ChangeRequest, Bug } from './types.js';
-import { ProjectNotInitializedError } from './errors.js';
-import { parseAllStoryFiles } from './parser/story-parser.js';
-import { generatePrompt } from './prompt/prompt-generator.js';
-import { generateApplyPrompt } from './prompt/apply-prompt-generator.js';
-import { validate } from './validate/validator.js';
-import { initProject } from './scaffold/init.js';
-import { isSDDProject, readConfig, writeConfig } from './config/config-manager.js';
-import { parseAllCRFiles } from './parser/cr-parser.js';
-import { parseAllBugFiles } from './parser/bug-parser.js';
-import type { ProjectInfo } from './scaffold/templates.js';
+import { readFile, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import type { StoryStatus, ValidationResult, SDDConfig, ChangeRequest, Bug } from "./types.js";
+import { ProjectNotInitializedError } from "./errors.js";
+import { parseAllStoryFiles } from "./parser/story-parser.js";
+import { generatePrompt } from "./prompt/prompt-generator.js";
+import { generateApplyPrompt } from "./prompt/apply-prompt-generator.js";
+import { validate } from "./validate/validator.js";
+import { initProject } from "./scaffold/init.js";
+import { isSDDProject, readConfig, writeConfig } from "./config/config-manager.js";
+import { parseAllCRFiles } from "./parser/cr-parser.js";
+import { parseAllBugFiles } from "./parser/bug-parser.js";
+import type { ProjectInfo } from "./scaffold/templates.js";
+import {
+  listSupportedAdapters,
+  syncSkillAdapters,
+  type SyncAdaptersOptions,
+  type SyncAdaptersResult,
+} from "./scaffold/skill-adapters.js";
 
 export class SDD {
   private root: string;
@@ -21,6 +27,15 @@ export class SDD {
 
   async init(info?: ProjectInfo): Promise<string[]> {
     return initProject(this.root, info);
+  }
+
+  async syncAdapters(options?: SyncAdaptersOptions): Promise<SyncAdaptersResult> {
+    this.ensureInitialized();
+    return syncSkillAdapters(this.root, options);
+  }
+
+  supportedAdapters(): string[] {
+    return listSupportedAdapters();
   }
 
   async config(): Promise<SDDConfig> {
@@ -37,15 +52,15 @@ export class SDD {
         relativePath: f.relativePath,
         status: f.frontmatter.status,
         version: f.frontmatter.version,
-        lastModified: f.frontmatter['last-modified'],
+        lastModified: f.frontmatter["last-modified"],
       })),
     };
   }
 
-  async pending(): Promise<import('./types.js').StoryFile[]> {
+  async pending(): Promise<import("./types.js").StoryFile[]> {
     this.ensureInitialized();
     const files = await parseAllStoryFiles(this.root);
-    return files.filter((f) => f.frontmatter.status !== 'synced');
+    return files.filter((f) => f.frontmatter.status !== "synced");
   }
 
   async sync(): Promise<string> {
@@ -76,21 +91,21 @@ export class SDD {
 
     for (const file of files) {
       const { status } = file.frontmatter;
-      if (status === 'synced') continue;
+      if (status === "synced") continue;
       if (paths && paths.length > 0 && !paths.includes(file.relativePath)) continue;
 
       const absPath = resolve(this.root, file.relativePath);
 
-      if (status === 'deleted') {
+      if (status === "deleted") {
         // File marked for deletion — remove it
-        const { unlink } = await import('node:fs/promises');
+        const { unlink } = await import("node:fs/promises");
         await unlink(absPath);
         marked.push(`${file.relativePath} (removed)`);
       } else {
         // new or changed → synced
-        const content = await readFile(absPath, 'utf-8');
-        const updated = content.replace(/^status:\s*(new|changed)/m, 'status: synced');
-        await writeFile(absPath, updated, 'utf-8');
+        const content = await readFile(absPath, "utf-8");
+        const updated = content.replace(/^status:\s*(new|changed)/m, "status: synced");
+        await writeFile(absPath, updated, "utf-8");
         marked.push(file.relativePath);
       }
     }
@@ -105,7 +120,7 @@ export class SDD {
 
   async pendingChangeRequests(): Promise<ChangeRequest[]> {
     const all = await this.changeRequests();
-    return all.filter((cr) => cr.frontmatter.status === 'draft');
+    return all.filter((cr) => cr.frontmatter.status === "draft");
   }
 
   async markCRApplied(paths?: string[]): Promise<string[]> {
@@ -114,13 +129,13 @@ export class SDD {
     const marked: string[] = [];
 
     for (const cr of all) {
-      if (cr.frontmatter.status === 'applied') continue;
+      if (cr.frontmatter.status === "applied") continue;
       if (paths && paths.length > 0 && !paths.includes(cr.relativePath)) continue;
 
       const absPath = resolve(this.root, cr.relativePath);
-      const content = await readFile(absPath, 'utf-8');
-      const updated = content.replace(/^status:\s*draft/m, 'status: applied');
-      await writeFile(absPath, updated, 'utf-8');
+      const content = await readFile(absPath, "utf-8");
+      const updated = content.replace(/^status:\s*draft/m, "status: applied");
+      await writeFile(absPath, updated, "utf-8");
       marked.push(cr.relativePath);
     }
 
@@ -134,7 +149,7 @@ export class SDD {
 
   async openBugs(): Promise<Bug[]> {
     const all = await this.bugs();
-    return all.filter((b) => b.frontmatter.status === 'open');
+    return all.filter((b) => b.frontmatter.status === "open");
   }
 
   async markBugResolved(paths?: string[]): Promise<string[]> {
@@ -143,13 +158,13 @@ export class SDD {
     const marked: string[] = [];
 
     for (const bug of all) {
-      if (bug.frontmatter.status === 'resolved') continue;
+      if (bug.frontmatter.status === "resolved") continue;
       if (paths && paths.length > 0 && !paths.includes(bug.relativePath)) continue;
 
       const absPath = resolve(this.root, bug.relativePath);
-      const content = await readFile(absPath, 'utf-8');
-      const updated = content.replace(/^status:\s*open/m, 'status: resolved');
-      await writeFile(absPath, updated, 'utf-8');
+      const content = await readFile(absPath, "utf-8");
+      const updated = content.replace(/^status:\s*open/m, "status: resolved");
+      await writeFile(absPath, updated, "utf-8");
       marked.push(bug.relativePath);
     }
 

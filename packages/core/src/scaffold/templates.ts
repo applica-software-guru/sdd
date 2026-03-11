@@ -23,7 +23,13 @@ export interface SkillTemplateOptions {
 }
 
 export function buildSkillMdTemplate(options?: SkillTemplateOptions): string {
-  const allowedToolsLine = options?.experimentalAllowedTools ? "allowed-tools: Bash(sdd:*) Read Glob Grep\n" : "";
+  const metadataSection = `metadata:
+  author: applica-software-guru
+  version: "1.0"`;
+
+  const allowedToolsSection = options?.experimentalAllowedTools
+    ? "allowed-tools: Bash(sdd:*) Read Glob Grep\n"
+    : "";
 
   return `---
 name: sdd
@@ -33,9 +39,7 @@ description: >
   story driven development, or spec-driven development.
 license: MIT
 compatibility: Requires sdd CLI (npm i -g @applica-software-guru/sdd)
-${allowedToolsLine}metadata:
-  author: applica-software-guru
-  version: "1.0"
+${allowedToolsSection}${metadataSection}
 ---
 
 # SDD — Story Driven Development

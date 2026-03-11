@@ -28,7 +28,7 @@ Your task: generate the initial documentation for this project based on the desc
 - system/tech-stack.md — Technologies and frameworks
 - system/interfaces.md — API contracts
 
-Follow the file format described in .sdd/skill/sdd/references/file-format.md for the YAML frontmatter. Do NOT write any code, only documentation. Commit all created files when done.`;
+Follow the YAML frontmatter format and status lifecycle documented in .sdd/skill/sdd/SKILL.md. Do NOT write any code, only documentation. Commit all created files when done.`;
   }
 
   return `Read .sdd/skill/sdd/SKILL.md first (fallback: .claude/skills/sdd/SKILL.md). This is a new SDD project.
@@ -45,14 +45,15 @@ Your task: generate the initial documentation for this project. Ask me a few que
 - system/tech-stack.md — Technologies and frameworks
 - system/interfaces.md — API contracts
 
-Follow the file format described in .sdd/skill/sdd/references/file-format.md for the YAML frontmatter. Do NOT write any code, only documentation.`;
+Follow the YAML frontmatter format and status lifecycle documented in .sdd/skill/sdd/SKILL.md. Do NOT write any code, only documentation.`;
 }
 
 export function registerInit(program: Command): void {
   program
     .command("init <project-name>")
     .description("Initialize a new SDD project")
-    .action(async (projectName: string) => {
+    .option("--experimental-allowed-tools", "Include experimental allowed-tools in generated SKILL.md")
+    .action(async (projectName: string, options: { experimentalAllowedTools?: boolean }) => {
       printBanner();
 
       const projectDir = resolve(process.cwd(), projectName);
@@ -122,7 +123,10 @@ export function registerInit(program: Command): void {
       }).start();
 
       const sdd = new SDD({ root: projectDir });
-      const files = await sdd.init({ description: description.trim() });
+      const files = await sdd.init({
+        description: description.trim(),
+        experimentalAllowedTools: options.experimentalAllowedTools,
+      });
 
       // Save agent config
       const config = await sdd.config();

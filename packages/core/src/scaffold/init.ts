@@ -39,7 +39,9 @@ export async function initProject(root: string, info?: ProjectInfo): Promise<str
   }
 
   // Create canonical skill and agent adapters
-  const adapters = await syncSkillAdapters(root);
+  const adapters = await syncSkillAdapters(root, {
+    experimentalAllowedTools: info?.experimentalAllowedTools,
+  });
   for (const change of [...adapters.canonical, ...adapters.adapters]) {
     if (change.action === "created") {
       createdFiles.push(change.path);

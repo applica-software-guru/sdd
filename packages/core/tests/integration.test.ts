@@ -47,13 +47,7 @@ describe("SDD integration", () => {
     expect(existsSync(join(tempDir, "system"))).toBe(true);
     expect(existsSync(join(tempDir, "code"))).toBe(true);
     expect(existsSync(join(tempDir, ".sdd/skill/sdd/SKILL.md"))).toBe(true);
-    expect(existsSync(join(tempDir, ".sdd/skill/sdd/references/file-format.md"))).toBe(true);
-    expect(existsSync(join(tempDir, ".sdd/skill/sdd/references/change-requests.md"))).toBe(true);
-    expect(existsSync(join(tempDir, ".sdd/skill/sdd/references/bugs.md"))).toBe(true);
     expect(existsSync(join(tempDir, ".claude/skills/sdd/SKILL.md"))).toBe(true);
-    expect(existsSync(join(tempDir, ".claude/skills/sdd/references/file-format.md"))).toBe(true);
-    expect(existsSync(join(tempDir, ".claude/skills/sdd/references/change-requests.md"))).toBe(true);
-    expect(existsSync(join(tempDir, ".claude/skills/sdd/references/bugs.md"))).toBe(true);
 
     const config = await sdd.config();
     expect(config.description).toBe("A test app");
@@ -151,5 +145,21 @@ describe("SDD integration", () => {
 
     await sdd.syncAdapters({ agents: ["copilot"] });
     expect(existsSync(join(tempDir, ".github/copilot-instructions.md"))).toBe(true);
+  });
+
+  it("supports experimental allowed-tools opt-in", async () => {
+    const sdd = new SDD({ root: tempDir });
+    await sdd.init({ description: "test" });
+
+    await sdd.syncAdapters({
+      agents: ["claude"],
+      force: true,
+      experimentalAllowedTools: true,
+    });
+
+    const canonicalSkill = await readFile(join(tempDir, ".sdd/skill/sdd/SKILL.md"), "utf-8");
+    const mirroredSkill = await readFile(join(tempDir, ".claude/skills/sdd/SKILL.md"), "utf-8");
+    expect(canonicalSkill).toContain("allowed-tools: Bash(sdd:*) Read Glob Grep");
+    expect(mirroredSkill).toContain("allowed-tools: Bash(sdd:*) Read Glob Grep");
   });
 });

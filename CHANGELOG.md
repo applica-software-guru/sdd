@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- **Single-file skill format**: Consolidated SDD guidance into `SKILL.md` and removed `references/*.md` from generated and packaged skills.
+- **Lower activation overhead**: Updated adapter pointer files and bootstrap prompts to read only `.sdd/skill/sdd/SKILL.md`.
+- **Scaffolding updates**: `sdd init` and `sdd adapters sync` now generate only `SKILL.md` for canonical and mirrored skill locations.
+- **Experimental allowed-tools mode**: Added opt-in flags `--experimental-allowed-tools` to `sdd init` and `sdd adapters sync` for clients that support the experimental frontmatter key.
+
 ## 1.1.0 (2026-03-08)
 
 ### Features

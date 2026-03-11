@@ -8,6 +8,9 @@ Initialize a new SDD project.
 
 ```bash
 sdd init my-project
+
+# Opt-in: include experimental allowed-tools in generated SKILL.md
+sdd init my-project --experimental-allowed-tools
 ```
 
 Interactive wizard that asks:
@@ -17,6 +20,10 @@ Interactive wizard that asks:
 3. How to start: write docs manually, generate bootstrap prompt, or generate and apply automatically
 
 Creates the project directory with `.sdd/`, `product/`, `system/`, `code/`, `change-requests/`, canonical skill files in `.sdd/skill/sdd/`, and agent adapters (including `.claude/skills/sdd/SKILL.md`).
+
+Optional flag:
+
+- `--experimental-allowed-tools` — include the experimental `allowed-tools` frontmatter field in generated skill files (support varies by client)
 
 ### `sdd adapters sync`
 
@@ -31,6 +38,9 @@ sdd adapters sync --agents claude,copilot,cursor
 
 # Preview changes without writing files
 sdd adapters sync --all --dry-run
+
+# Opt-in: regenerate skill files with experimental allowed-tools
+sdd adapters sync --all --force --experimental-allowed-tools
 ```
 
 Useful options:
@@ -39,6 +49,7 @@ Useful options:
 - `--agents <list>` — configure only specific adapters
 - `--dry-run` — print planned changes only
 - `--force` — overwrite existing adapter files when they differ
+- `--experimental-allowed-tools` — include experimental `allowed-tools` in generated skill files (support varies by client)
 
 ### `sdd adapters list`
 

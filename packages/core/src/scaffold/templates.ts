@@ -15,9 +15,17 @@ ${content}
 
 export interface ProjectInfo {
   description: string;
+  experimentalAllowedTools?: boolean;
 }
 
-export const SKILL_MD_TEMPLATE = `---
+export interface SkillTemplateOptions {
+  experimentalAllowedTools?: boolean;
+}
+
+export function buildSkillMdTemplate(options?: SkillTemplateOptions): string {
+  const allowedToolsLine = options?.experimentalAllowedTools ? "allowed-tools: Bash(sdd:*) Read Glob Grep\n" : "";
+
+  return `---
 name: sdd
 description: >
   Story Driven Development workflow. Use when working in a project
@@ -25,8 +33,7 @@ description: >
   story driven development, or spec-driven development.
 license: MIT
 compatibility: Requires sdd CLI (npm i -g @applica-software-guru/sdd)
-allowed-tools: Bash(sdd:*) Read Glob Grep
-metadata:
+${allowedToolsLine}metadata:
   author: applica-software-guru
   version: "1.0"
 ---
@@ -106,16 +113,7 @@ Delete the related code in \`code/\`, then run \`sdd mark-synced <file>\` (the d
 - \`bugs/\` — Bug reports
 - \`.sdd/\` — Project config and sync state (do not edit)
 
-## References
-
-For detailed information on specific topics, see:
-
-- [File format and status lifecycle](references/file-format.md)
-- [Change Requests workflow](references/change-requests.md)
-- [Bug workflow](references/bugs.md)
-`;
-
-export const FILE_FORMAT_REFERENCE = `# File Format and Status Lifecycle
+## Documentation format and status lifecycle
 
 ## YAML Frontmatter
 
@@ -180,9 +178,8 @@ Reference images in the markdown with relative paths:
 \`\`\`
 
 Both formats work — use a folder only when you have screenshots or multiple files for a feature.
-`;
 
-export const CHANGE_REQUESTS_REFERENCE = `# Change Requests
+## Change Requests
 
 Change Requests (CRs) are markdown files in \`change-requests/\` that describe modifications to the documentation.
 
@@ -211,9 +208,8 @@ created-at: "2025-01-01T00:00:00.000Z"
 - \`sdd cr list\` — See all change requests and their status
 - \`sdd cr pending\` — Show only draft CRs to process
 - \`sdd mark-cr-applied [files...]\` — Mark CRs as applied after updating the docs
-`;
 
-export const BUGS_REFERENCE = `# Bugs
+## Bugs
 
 Bugs are markdown files in \`bugs/\` that describe problems found in the codebase.
 
@@ -243,6 +239,9 @@ created-at: "2025-01-01T00:00:00.000Z"
 - \`sdd bug open\` — Show only open bugs to fix
 - \`sdd mark-bug-resolved [files...]\` — Mark bugs as resolved after fixing
 `;
+}
+
+export const SKILL_MD_TEMPLATE = buildSkillMdTemplate();
 
 export const EMPTY_LOCK_TEMPLATE = () => `synced-at: "${new Date().toISOString()}"
 files: {}

@@ -6,7 +6,6 @@ description: >
   story driven development, or spec-driven development.
 license: MIT
 compatibility: Requires sdd CLI (npm i -g @applica-software-guru/sdd)
-allowed-tools: Bash(sdd:*) Read Glob Grep
 metadata:
   author: applica-software-guru
   version: "1.0"
@@ -87,10 +86,128 @@ Delete the related code in `code/`, then run `sdd mark-synced <file>` (the doc f
 - `bugs/` — Bug reports
 - `.sdd/` — Project config and sync state (do not edit)
 
-## References
+## Documentation format and status lifecycle
 
-For detailed information on specific topics, see:
+## YAML Frontmatter
 
-- [File format and status lifecycle](references/file-format.md)
-- [Change Requests workflow](references/change-requests.md)
-- [Bug workflow](references/bugs.md)
+Every `.md` file in `product/` and `system/` must start with this YAML frontmatter:
+
+```yaml
+---
+title: "File title"
+status: new
+author: ""
+last-modified: "2025-01-01T00:00:00.000Z"
+version: "1.0"
+---
+```
+
+## Status values
+
+- **`new`** — new file, needs to be implemented
+- **`changed`** — modified since last sync, code needs updating
+- **`deleted`** — feature to be removed, agent should delete related code
+- **`synced`** — already implemented, up to date
+
+## Version
+
+Patch-bump on each edit: 1.0 -> 1.1 -> 1.2
+
+## Last-modified
+
+ISO 8601 datetime, updated on each edit.
+
+## How sync works
+
+`sdd sync` generates a structured prompt for the agent based on pending files:
+
+- **`new` files**: the agent reads the full documentation and implements it from scratch
+- **`changed` files**: SDD uses `git diff` to compute what changed in the documentation since the last commit, and includes the diff in the sync prompt - this way the agent sees exactly what was modified and can update only the affected code
+- **`deleted` files**: the agent removes the related code
+
+This is why **committing after every mark-synced is mandatory** - the git history is what SDD uses to detect changes.
+
+## UX and screenshots
+
+When a feature has UX mockups or screenshots, place them next to the feature doc:
+
+- **Simple feature** (no screenshots): `product/features/auth.md`
+- **Feature with screenshots**: use a folder with `index.md`:
+
+```
+product/features/auth/
+  index.md          <- feature doc
+  login.png         <- screenshot
+  register.png      <- screenshot
+```
+
+Reference images in the markdown with relative paths:
+
+```markdown
+## UX
+
+![Login screen](login.png)
+![Register screen](register.png)
+```
+
+Both formats work - use a folder only when you have screenshots or multiple files for a feature.
+
+## Change Requests
+
+Change Requests (CRs) are markdown files in `change-requests/` that describe modifications to the documentation.
+
+## CR format
+
+```yaml
+---
+title: "Add authentication feature"
+status: draft
+author: "user"
+created-at: "2025-01-01T00:00:00.000Z"
+---
+```
+
+- **status**: `draft` (pending) or `applied` (already processed)
+
+## CR workflow
+
+1. Check for pending CRs: `sdd cr pending`
+2. Read each pending CR and apply the described changes to the documentation files (marking them as `new`, `changed`, or `deleted`)
+3. After applying a CR to the docs, mark it: `sdd mark-cr-applied change-requests/CR-001.md`
+4. Then run `sdd sync` to implement the code changes
+
+## CR commands
+
+- `sdd cr list` — See all change requests and their status
+- `sdd cr pending` — Show only draft CRs to process
+- `sdd mark-cr-applied [files...]` — Mark CRs as applied after updating the docs
+
+## Bugs
+
+Bugs are markdown files in `bugs/` that describe problems found in the codebase.
+
+## Bug format
+
+```yaml
+---
+title: "Login fails with empty password"
+status: open
+author: "user"
+created-at: "2025-01-01T00:00:00.000Z"
+---
+```
+
+- **status**: `open` (needs fixing) or `resolved` (already fixed)
+
+## Bug workflow
+
+1. Check for open bugs: `sdd bug open`
+2. Read each open bug and fix the code and/or documentation
+3. After fixing a bug, mark it: `sdd mark-bug-resolved bugs/BUG-001.md`
+4. Commit the fix
+
+## Bug commands
+
+- `sdd bug list` — See all bugs and their status
+- `sdd bug open` — Show only open bugs to fix
+- `sdd mark-bug-resolved [files...]` — Mark bugs as resolved after fixing

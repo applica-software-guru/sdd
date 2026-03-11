@@ -25,7 +25,7 @@ SDD solves this:
 - **The Story is the source of truth** — the agent doesn't receive prompts, it receives the Story
 - **Change requests go through documentation** — update the Story first, then the agent aligns the code
 - **Your project is always documented** — always coherent, always explainable to anyone on the team
-- **Agent-agnostic** — works with Claude, GPT, Copilot, Cursor, or any LLM
+- **Agent-agnostic** — works across major coding-agent clients (Claude Code, Copilot, Cursor, Gemini, JetBrains AI, and others)
 
 This changes the role of the developer. You stop thinking in functions and start thinking in narratives. You stop debugging syntax and start refining intent.
 
@@ -46,6 +46,18 @@ sdd sync
 ```
 
 That's it. `sdd sync` generates the prompt for any coding agent to implement what you documented.
+
+## Compatibility Note
+
+SDD uses the [agentskills.io](https://agentskills.io) format and generates a single-file skill (`SKILL.md`) for maximum portability and lower tool-call overhead.
+
+What this means in practice:
+
+- Compatible with agent clients that can read project instructions/skills (for example via `SKILL.md`, `AGENTS.md`, or client-specific adapter files)
+- Not automatically compatible with a raw base model unless it is wrapped by an agent client/harness that can load local files and follow tool workflows
+- Behavior can still vary by client based on how it discovers skills, parses frontmatter, and executes tool permissions
+
+If your client supports the experimental Agent Skills key, you can opt in to `allowed-tools` generation with `sdd init --experimental-allowed-tools` or `sdd adapters sync --experimental-allowed-tools`.
 
 ## How It Works
 

@@ -94,3 +94,4 @@ For detailed information on specific topics, see:
 - [File format and status lifecycle](references/file-format.md)
 - [Change Requests workflow](references/change-requests.md)
 - [Bug workflow](references/bugs.md)
+- [UI Component workflow](../sdd-ui/SKILL.md)

@@ -132,6 +132,55 @@ sdd mark-cr-applied change-requests/CR-001.md
 sdd mark-cr-applied
 ```
 
+## UI Component Editor
+
+### `sdd ui launch-editor <component-name>`
+
+Launch the split-panel UI editor: spec screenshot on the left, live React component on the right.
+
+```bash
+# Single screenshot
+sdd ui launch-editor LoginForm \
+  --screenshot product/features/auth/login.png
+
+# Multiple screenshots (tabs)
+sdd ui launch-editor LoginForm \
+  --screenshot product/features/auth/login-desktop.png \
+  --screenshot product/features/auth/login-mobile.png
+
+# Run in background (recommended when used by an agent)
+sdd ui launch-editor LoginForm \
+  --screenshot product/features/auth/login.png \
+  --detach
+```
+
+Options:
+- `--screenshot <path>` — screenshot to show in the spec panel (repeatable)
+- `--port <n>` — port for the editor (default: `5174`)
+- `--detach` — run in background, terminal returns immediately; PID saved to `.sdd/ui.pid`
+
+If the component file doesn't exist, a scaffold is created automatically at `code/components/<ComponentName>.tsx`. Vite HMR updates the preview on every save.
+
+### `sdd ui stop`
+
+Stop a detached UI editor.
+
+```bash
+sdd ui stop
+```
+
+Reads the PID from `.sdd/ui.pid` and sends SIGTERM. If the process was already dead, cleans up the stale file.
+
+## Upgrade
+
+### `sdd upgrade`
+
+Upgrade sdd to the latest version. If run from inside an SDD project, also refreshes the skill files in `.claude/skills/`.
+
+```bash
+sdd upgrade
+```
+
 ## Apply
 
 ### `sdd apply [--agent <name>]`

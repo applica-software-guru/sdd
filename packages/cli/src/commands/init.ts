@@ -9,6 +9,7 @@ import { SDD, writeConfig, runAgent } from "@applica-software-guru/sdd-core";
 import { printBanner } from "../ui/banner.js";
 import { success, info, heading } from "../ui/format.js";
 import { renderMarkdown } from "../ui/markdown.js";
+import { installSkills } from "../skills.js";
 
 const START_PROMPT = `Read .sdd/skill/sdd/SKILL.md (fallback: .claude/skills/sdd/SKILL.md) and the documentation in product/ and system/, then run \`sdd sync\` to start working.`;
 
@@ -124,6 +125,8 @@ export function registerInit(program: Command): void {
       const sdd = new SDD({ root: projectDir });
       const files = await sdd.init({ description: description.trim() });
 
+      installSkills(projectDir);
+
       // Save agent config
       const config = await sdd.config();
       config.agent = agentName;
@@ -146,6 +149,7 @@ export function registerInit(program: Command): void {
       console.log(success("product/features/"));
       console.log(success("system/"));
       console.log(success("code/"));
+      console.log(success(".claude/skills/"));
 
       if (bootstrapMode === "auto") {
         const prompt = buildBootstrapPrompt(description.trim(), true);

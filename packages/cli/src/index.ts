@@ -11,6 +11,8 @@ import { registerCR } from "./commands/cr.js";
 import { registerBug } from "./commands/bug.js";
 import { registerApply } from "./commands/apply.js";
 import { registerAdapters } from "./commands/adapters.js";
+import { registerUI } from "./commands/ui.js";
+import { registerUpgrade } from "./commands/upgrade.js";
 
 const packageRequire = createRequire(__filename);
 const packageJson = packageRequire("../package.json") as { version: string };
@@ -32,6 +34,8 @@ registerCR(program);
 registerBug(program);
 registerApply(program);
 registerAdapters(program);
+registerUI(program);
+registerUpgrade(program);
 
 program.parseAsync().catch((err) => {
   console.error(err.message);

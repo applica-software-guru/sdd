@@ -2,3 +2,5 @@ node_modules/
 dist/
 *.vsix
 .DS_Store
+packages/cli/skills/
+packages/sdd-ui/.env.local

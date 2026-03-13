@@ -85,6 +85,7 @@ The key difference from other spec-driven tools is scope and lifecycle: SDD cove
 | --------------------------------- | ------------------------------------------------------ |
 | `@applica-software-guru/sdd-core` | Core library — parser, prompt generator, status engine |
 | `@applica-software-guru/sdd`      | CLI tool                                               |
+| `@applica-software-guru/sdd-ui`   | Split-panel UI editor for visual component development |
 | `sdd-vscode`                      | VS Code extension                                      |
 
 ## Maintainers

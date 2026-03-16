@@ -13,8 +13,7 @@ sdd init my-project
 Interactive wizard that asks:
 
 1. Project description
-2. Which agent to use (Claude Code, Codex, OpenCode, or custom)
-3. How to start: write docs manually, generate bootstrap prompt, or generate and apply automatically
+2. How to start: write docs manually, generate bootstrap prompt, or generate and apply automatically
 
 Creates the project directory with `.sdd/`, `product/`, `system/`, `code/`, `change-requests/`, canonical skill files in `.sdd/skill/sdd/`, and agent adapters (including `.claude/skills/sdd/SKILL.md`).
 
@@ -155,6 +154,7 @@ sdd ui launch-editor LoginForm \
 ```
 
 Options:
+
 - `--screenshot <path>` — screenshot to show in the spec panel (repeatable)
 - `--port <n>` — port for the editor (default: `5174`)
 - `--detach` — run in background, terminal returns immediately; PID saved to `.sdd/ui.pid`

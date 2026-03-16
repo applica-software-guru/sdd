@@ -5,7 +5,7 @@ import clipboardy from "clipboardy";
 import { existsSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import ora from "ora";
-import { SDD, writeConfig, runAgent } from "@applica-software-guru/sdd-core";
+import { SDD, runAgent } from "@applica-software-guru/sdd-core";
 import { printBanner } from "../ui/banner.js";
 import { success, info, heading } from "../ui/format.js";
 import { renderMarkdown } from "../ui/markdown.js";
@@ -58,11 +58,7 @@ export function registerInit(program: Command): void {
       const projectDir = resolve(process.cwd(), projectName);
 
       if (existsSync(resolve(projectDir, ".sdd"))) {
-        console.log(
-          chalk.yellow(
-            `\n  SDD project already initialized at ${projectName}/\n`,
-          ),
-        );
+        console.log(chalk.yellow(`\n  SDD project already initialized at ${projectName}/\n`));
         return;
       }
 
@@ -79,31 +75,6 @@ export function registerInit(program: Command): void {
       if (!description.trim()) {
         console.log(chalk.yellow("\n  No description provided. Aborting.\n"));
         return;
-      }
-
-      const agentChoice = await select({
-        message: "Which agent do you use?",
-        choices: [
-          { value: "claude", name: "Claude Code" },
-          { value: "codex", name: "Codex" },
-          { value: "opencode", name: "OpenCode" },
-          { value: "other", name: "Other" },
-        ],
-        theme: promptTheme,
-      });
-
-      let agentName = agentChoice;
-      let customCommand: string | undefined;
-
-      if (agentChoice === "other") {
-        agentName = await input({
-          message: "Agent name:",
-          theme: promptTheme,
-        });
-        customCommand = await input({
-          message: "Agent command (use $PROMPT_FILE for the prompt file path):",
-          theme: promptTheme,
-        });
       }
 
       const bootstrapMode = await select({
@@ -131,20 +102,10 @@ export function registerInit(program: Command): void {
       const sdd = new SDD({ root: projectDir });
       const files = await sdd.init({ description: description.trim() });
 
-      // Save agent config
-      const config = await sdd.config();
-      config.agent = agentName;
-      if (customCommand) {
-        config.agents = { [agentName]: customCommand };
-      }
-      await writeConfig(projectDir, config);
-
       spinner.stop();
 
       // Project created
-      console.log(
-        chalk.cyan.bold(`\n  ${chalk.white(projectName)} is ready!\n`),
-      );
+      console.log(chalk.cyan.bold(`\n  ${chalk.white(projectName)} is ready!\n`));
 
       // Show what was created
       console.log(chalk.dim("  Created:"));
@@ -158,6 +119,7 @@ export function registerInit(program: Command): void {
       console.log(success(".claude/skills/"));
 
       if (bootstrapMode === "auto") {
+        const agentName = "claude";
         const prompt = buildBootstrapPrompt(description.trim(), true);
 
         console.log(chalk.dim("  ─".repeat(30)));
@@ -165,14 +127,13 @@ export function registerInit(program: Command): void {
         console.log(renderMarkdown(prompt));
         console.log(chalk.dim("  ─".repeat(30)));
 
-        console.log(info(`Using agent: ${chalk.cyan(agentName)}`));
+        console.log(info(`Using agent: ${chalk.cyan(agentName)} (default)`));
         console.log(info("Starting agent...\n"));
 
         const exitCode = await runAgent({
           root: projectDir,
           prompt,
           agent: agentName,
-          agents: customCommand ? { [agentName]: customCommand } : undefined,
         });
 
         if (exitCode !== 0) {
@@ -190,12 +151,8 @@ export function registerInit(program: Command): void {
         console.log(chalk.cyan.bold("\n  Next steps:\n"));
         console.log(`  ${chalk.white("1.")} Enter the project folder:\n`);
         console.log(`     ${chalk.green(`cd ${projectName}`)}\n`);
-        console.log(
-          `  ${chalk.white("2.")} Open your AI agent and paste the prompt below.`,
-        );
-        console.log(
-          `     It will ask you a few questions and generate the initial docs.\n`,
-        );
+        console.log(`  ${chalk.white("2.")} Open your AI agent and paste the prompt below.`);
+        console.log(`     It will ask you a few questions and generate the initial docs.\n`);
 
         console.log(chalk.dim("  ─".repeat(30)));
         console.log(heading("Agent Prompt"));
@@ -203,9 +160,7 @@ export function registerInit(program: Command): void {
 
         try {
           await clipboardy.write(prompt);
-          console.log(
-            success("Copied to clipboard — paste it into your agent.\n"),
-          );
+          console.log(success("Copied to clipboard — paste it into your agent.\n"));
         } catch {
           console.log(info("Copy the prompt above into your agent.\n"));
         }
@@ -219,21 +174,15 @@ export function registerInit(program: Command): void {
       console.log(
         `  ${chalk.white("2.")} Start writing your documentation in ${chalk.cyan("product/")} and ${chalk.cyan("system/")}.`,
       );
-      console.log(
-        `     Check ${chalk.cyan(".sdd/skill/sdd/SKILL.md")} for the workflow.\n`,
-      );
-      console.log(
-        `  ${chalk.white("3.")} When ready, let your AI agent run:\n`,
-      );
+      console.log(`     Check ${chalk.cyan(".sdd/skill/sdd/SKILL.md")} for the workflow.\n`);
+      console.log(`  ${chalk.white("3.")} When ready, let your AI agent run:\n`);
       console.log(`     ${chalk.green("sdd sync")}\n`);
 
       const prompt = START_PROMPT;
 
       try {
         await clipboardy.write(prompt);
-        console.log(
-          success("Copied to clipboard — paste it into your agent.\n"),
-        );
+        console.log(success("Copied to clipboard — paste it into your agent.\n"));
       } catch {
         console.log(info("Copy the prompt above into your agent.\n"));
       }

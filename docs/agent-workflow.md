@@ -9,11 +9,11 @@ SDD projects are designed to be driven by an agent. The agent reads `.sdd/skill/
 ## Step 1: Create the project
 
 ```bash
-sdd init my-project --bootstrap
+sdd init my-project
 cd my-project
 ```
 
-The `--bootstrap` flag generates a special prompt that you'll paste into the agent. This prompt tells the agent to **ask you questions** about your project and then generate all the initial documentation.
+During `sdd init`, choose one of the guided start modes to generate a bootstrap prompt (or apply it automatically). The prompt tells the agent to **ask you questions** about your project and then generate all the initial documentation.
 
 The prompt is automatically copied to your clipboard.
 
@@ -137,7 +137,7 @@ The agent reads the CR, updates the docs, marks the CR as applied, and then sync
 - **Be specific in your docs.** The more detail in the Story, the better the implementation. Include edge cases, validation rules, error messages.
 - **Use screenshots.** If you have UX mockups, put them next to the feature doc (see [UX & Screenshots](ux-screenshots.md)). Multimodal agents will use them.
 - **One feature per file.** Keep feature docs focused. It's easier for the agent to implement one thing well than to parse a giant document.
-- **Review the generated docs.** After bootstrap, spend time reading and refining before syncing. This is where you add your domain knowledge.
+- **Review the generated docs.** After initial generation, spend time reading and refining before syncing. This is where you add your domain knowledge.
 - **Visual components.** For UI components with a screenshot spec, use `sdd ui launch-editor` for pixel-accurate iteration. See [UX & Screenshots](ux-screenshots.md).
 
 ## Agent compatibility

@@ -14,6 +14,11 @@ on:
         required: false
         default: false
         type: boolean
+      publish_ui:
+        description: "Publish optional @applica-software-guru/sdd-ui package"
+        required: false
+        default: false
+        type: boolean
 
 env:
   TAP_OWNER: applica-software-guru
@@ -86,7 +91,6 @@ jobs:
           TARGET_VERSION="${{ needs.resolve-version.outputs.version }}"
           PACKAGES=(
             "@applica-software-guru/sdd-core"
-            "@applica-software-guru/sdd-ui"
             "@applica-software-guru/sdd"
           )
 
@@ -101,14 +105,27 @@ jobs:
               continue
             fi
 
-            if [ "${PACKAGE}" = "@applica-software-guru/sdd-ui" ]; then
-              echo "Warning: optional package ${PACKAGE} failed to publish. Continuing release for CLI/Homebrew."
-              continue
-            fi
-
             echo "Failed to publish required package: ${PACKAGE}"
             exit 1
           done
+
+      - name: Publish optional sdd-ui to npm
+        if: ${{ github.event.inputs.publish_ui == 'true' }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_UI || secrets.NPM_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TARGET_VERSION="${{ needs.resolve-version.outputs.version }}"
+          PACKAGE="@applica-software-guru/sdd-ui"
+
+          if npm view "${PACKAGE}@${TARGET_VERSION}" version >/dev/null 2>&1; then
+            echo "${PACKAGE}@${TARGET_VERSION} already published, skipping"
+            exit 0
+          fi
+
+          npm publish --workspace "${PACKAGE}" --access public
 
       - name: Validate CLI version
         shell: bash

@@ -76,6 +76,30 @@ jobs:
           npm run build --workspace @applica-software-guru/sdd-core
           npm run build --workspace @applica-software-guru/sdd
 
+      - name: Publish workspaces to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TARGET_VERSION="${{ needs.resolve-version.outputs.version }}"
+          PACKAGES=(
+            "@applica-software-guru/sdd-core"
+            "@applica-software-guru/sdd-ui"
+            "@applica-software-guru/sdd"
+          )
+
+          for PACKAGE in "${PACKAGES[@]}"; do
+            if npm view "${PACKAGE}@${TARGET_VERSION}" version >/dev/null 2>&1; then
+              echo "${PACKAGE}@${TARGET_VERSION} already published, skipping"
+              continue
+            fi
+
+            echo "Publishing ${PACKAGE}@${TARGET_VERSION}"
+            npm publish --workspace "${PACKAGE}" --access public
+          done
+
       - name: Validate CLI version
         shell: bash
         run: |
@@ -87,11 +111,6 @@ jobs:
             echo "Version mismatch: package.json=$ACTUAL, workflow=$EXPECTED"
             exit 1
           fi
-
-      - name: Publish CLI to npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --workspace @applica-software-guru/sdd --access public
 
   sync-homebrew-tap:
     runs-on: ubuntu-latest

@@ -97,7 +97,17 @@ jobs:
             fi
 
             echo "Publishing ${PACKAGE}@${TARGET_VERSION}"
-            npm publish --workspace "${PACKAGE}" --access public
+            if npm publish --workspace "${PACKAGE}" --access public; then
+              continue
+            fi
+
+            if [ "${PACKAGE}" = "@applica-software-guru/sdd-ui" ]; then
+              echo "Warning: optional package ${PACKAGE} failed to publish. Continuing release for CLI/Homebrew."
+              continue
+            fi
+
+            echo "Failed to publish required package: ${PACKAGE}"
+            exit 1
           done
 
       - name: Validate CLI version

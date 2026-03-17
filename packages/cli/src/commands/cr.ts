@@ -6,7 +6,9 @@ import { heading, info } from '../ui/format.js';
 function statusLabel(status: string): string {
   switch (status) {
     case 'draft':
-      return chalk.yellow('draft');
+      return chalk.magenta('draft');
+    case 'pending':
+      return chalk.yellow('pending');
     case 'applied':
       return chalk.green('applied');
     default:
@@ -33,7 +35,7 @@ export function registerCR(program: Command): void {
       }
 
       for (const cr of crs) {
-        const icon = cr.frontmatter.status === 'applied' ? chalk.green('  ✓') : chalk.yellow('  ●');
+        const icon = cr.frontmatter.status === 'applied' ? chalk.green('  ✓') : cr.frontmatter.status === 'draft' ? chalk.magenta('  ◇') : chalk.yellow('  ●');
         console.log(`${icon} ${chalk.white(cr.relativePath)} ${chalk.dim(`[${statusLabel(cr.frontmatter.status)}]`)} ${chalk.cyan(cr.frontmatter.title)}`);
       }
       console.log('');
@@ -72,7 +74,7 @@ export function registerCR(program: Command): void {
       console.log(heading('Mark CR Applied'));
 
       if (marked.length === 0) {
-        console.log(info('No draft change requests to mark.\n'));
+        console.log(info('No pending change requests to mark.\n'));
         return;
       }
 

@@ -3,6 +3,8 @@ import Table from 'cli-table3';
 
 export function statusIcon(status: string): string {
   switch (status) {
+    case 'draft':
+      return chalk.magenta('◇');
     case 'synced':
       return chalk.green('✓');
     case 'new':
@@ -18,6 +20,8 @@ export function statusIcon(status: string): string {
 
 export function statusLabel(status: string): string {
   switch (status) {
+    case 'draft':
+      return chalk.magenta('draft');
     case 'synced':
       return chalk.green.bold('synced');
     case 'new':

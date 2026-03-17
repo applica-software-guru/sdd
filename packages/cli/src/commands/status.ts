@@ -18,6 +18,7 @@ export function registerStatus(program: Command): void {
       }
 
       const counts = {
+        draft: result.files.filter((f) => f.status === 'draft').length,
         new: result.files.filter((f) => f.status === 'new').length,
         changed: result.files.filter((f) => f.status === 'changed').length,
         deleted: result.files.filter((f) => f.status === 'deleted').length,
@@ -29,6 +30,7 @@ export function registerStatus(program: Command): void {
       console.log('');
 
       const parts: string[] = [];
+      if (counts.draft) parts.push(chalk.magenta.bold(`${counts.draft} draft`));
       if (counts.new) parts.push(chalk.cyan.bold(`${counts.new} new`));
       if (counts.changed) parts.push(chalk.yellow.bold(`${counts.changed} changed`));
       if (counts.deleted) parts.push(chalk.red.bold(`${counts.deleted} deleted`));

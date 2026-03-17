@@ -5,6 +5,7 @@ import { ProjectNotInitializedError } from "./errors.js";
 import { parseAllStoryFiles } from "./parser/story-parser.js";
 import { generatePrompt } from "./prompt/prompt-generator.js";
 import { generateApplyPrompt } from "./prompt/apply-prompt-generator.js";
+import { generateDraftEnrichmentPrompt } from "./prompt/draft-prompt-generator.js";
 import { validate } from "./validate/validator.js";
 import { initProject } from "./scaffold/init.js";
 import { isSDDProject, readConfig, writeConfig } from "./config/config-manager.js";
@@ -17,6 +18,14 @@ import {
   type SyncAdaptersOptions,
   type SyncAdaptersResult,
 } from "./scaffold/skill-adapters.js";
+import {
+  pushToRemote,
+  pullFromRemote,
+  pullCRsFromRemote,
+  pullBugsFromRemote,
+  getRemoteStatus,
+} from "./remote/sync-engine.js";
+import type { PushResult, PullResult, PullEntitiesResult, RemoteStatusResult } from "./remote/types.js";
 
 export class SDD {
   private root: string;
@@ -60,7 +69,7 @@ export class SDD {
   async pending(): Promise<import("./types.js").StoryFile[]> {
     this.ensureInitialized();
     const files = await parseAllStoryFiles(this.root);
-    return files.filter((f) => f.frontmatter.status !== "synced");
+    return files.filter((f) => f.frontmatter.status !== "synced" && f.frontmatter.status !== "draft");
   }
 
   async sync(): Promise<string> {
@@ -70,12 +79,16 @@ export class SDD {
 
   async applyPrompt(): Promise<string | null> {
     this.ensureInitialized();
-    const [bugs, changeRequests, pendingFiles] = await Promise.all([
+    const [bugs, changeRequests, pendingFiles, drafts, allFiles, config] = await Promise.all([
       this.openBugs(),
       this.pendingChangeRequests(),
       this.pending(),
+      this.drafts(),
+      parseAllStoryFiles(this.root),
+      readConfig(this.root),
     ]);
-    return generateApplyPrompt(bugs, changeRequests, pendingFiles, this.root);
+    const projectContext = allFiles.filter((f) => f.frontmatter.status !== "draft");
+    return generateApplyPrompt(bugs, changeRequests, pendingFiles, this.root, drafts, projectContext, config.description);
   }
 
   async validate(): Promise<ValidationResult> {
@@ -120,7 +133,7 @@ export class SDD {
 
   async pendingChangeRequests(): Promise<ChangeRequest[]> {
     const all = await this.changeRequests();
-    return all.filter((cr) => cr.frontmatter.status === "draft");
+    return all.filter((cr) => cr.frontmatter.status === "pending");
   }
 
   async markCRApplied(paths?: string[]): Promise<string[]> {
@@ -129,12 +142,12 @@ export class SDD {
     const marked: string[] = [];
 
     for (const cr of all) {
-      if (cr.frontmatter.status === "applied") continue;
+      if (cr.frontmatter.status !== "pending") continue;
       if (paths && paths.length > 0 && !paths.includes(cr.relativePath)) continue;
 
       const absPath = resolve(this.root, cr.relativePath);
       const content = await readFile(absPath, "utf-8");
-      const updated = content.replace(/^status:\s*draft/m, "status: applied");
+      const updated = content.replace(/^status:\s*pending/m, "status: applied");
       await writeFile(absPath, updated, "utf-8");
       marked.push(cr.relativePath);
     }
@@ -169,6 +182,101 @@ export class SDD {
     }
 
     return marked;
+  }
+
+  // ── Drafts ───────────────────────────────────────────────────────────
+
+  async drafts(): Promise<{ docs: import("./types.js").StoryFile[]; crs: ChangeRequest[]; bugs: Bug[] }> {
+    this.ensureInitialized();
+    const [files, crs, bugs] = await Promise.all([
+      parseAllStoryFiles(this.root),
+      this.changeRequests(),
+      this.bugs(),
+    ]);
+    return {
+      docs: files.filter((f) => f.frontmatter.status === "draft"),
+      crs: crs.filter((cr) => cr.frontmatter.status === "draft"),
+      bugs: bugs.filter((b) => b.frontmatter.status === "draft"),
+    };
+  }
+
+  async draftEnrichmentPrompt(): Promise<string | null> {
+    this.ensureInitialized();
+    const drafts = await this.drafts();
+    const allFiles = await parseAllStoryFiles(this.root);
+    const projectContext = allFiles.filter((f) => f.frontmatter.status !== "draft");
+    const config = await readConfig(this.root);
+    return generateDraftEnrichmentPrompt(drafts, projectContext, config.description);
+  }
+
+  async markDraftsEnriched(paths?: string[]): Promise<string[]> {
+    this.ensureInitialized();
+    const marked: string[] = [];
+
+    // Story files: draft → new
+    const files = await parseAllStoryFiles(this.root);
+    for (const file of files) {
+      if (file.frontmatter.status !== "draft") continue;
+      if (paths && paths.length > 0 && !paths.includes(file.relativePath)) continue;
+      const absPath = resolve(this.root, file.relativePath);
+      const content = await readFile(absPath, "utf-8");
+      const updated = content.replace(/^status:\s*draft/m, "status: new");
+      await writeFile(absPath, updated, "utf-8");
+      marked.push(file.relativePath);
+    }
+
+    // CRs: draft → pending
+    const crs = await this.changeRequests();
+    for (const cr of crs) {
+      if (cr.frontmatter.status !== "draft") continue;
+      if (paths && paths.length > 0 && !paths.includes(cr.relativePath)) continue;
+      const absPath = resolve(this.root, cr.relativePath);
+      const content = await readFile(absPath, "utf-8");
+      const updated = content.replace(/^status:\s*draft/m, "status: pending");
+      await writeFile(absPath, updated, "utf-8");
+      marked.push(cr.relativePath);
+    }
+
+    // Bugs: draft → open
+    const allBugs = await this.bugs();
+    for (const bug of allBugs) {
+      if (bug.frontmatter.status !== "draft") continue;
+      if (paths && paths.length > 0 && !paths.includes(bug.relativePath)) continue;
+      const absPath = resolve(this.root, bug.relativePath);
+      const content = await readFile(absPath, "utf-8");
+      const updated = content.replace(/^status:\s*draft/m, "status: open");
+      await writeFile(absPath, updated, "utf-8");
+      marked.push(bug.relativePath);
+    }
+
+    return marked;
+  }
+
+  // ── Remote sync ──────────────────────────────────────────────────────
+
+  async remoteStatus(): Promise<RemoteStatusResult> {
+    this.ensureInitialized();
+    return getRemoteStatus(this.root);
+  }
+
+  async push(paths?: string[]): Promise<PushResult> {
+    this.ensureInitialized();
+    return pushToRemote(this.root, paths);
+  }
+
+  async pull(): Promise<PullResult> {
+    this.ensureInitialized();
+    return pullFromRemote(this.root);
+  }
+
+  async pullCRs(): Promise<PullEntitiesResult> {
+    this.ensureInitialized();
+    return pullCRsFromRemote(this.root);
+  }
+
+  async pullBugs(): Promise<PullEntitiesResult> {
+    this.ensureInitialized();
+    return pullBugsFromRemote(this.root);
   }
 
   private ensureInitialized(): void {

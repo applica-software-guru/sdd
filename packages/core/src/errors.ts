@@ -25,3 +25,19 @@ export class ProjectNotInitializedError extends SDDError {
     this.name = 'ProjectNotInitializedError';
   }
 }
+
+export class RemoteError extends SDDError {
+  public statusCode: number;
+  constructor(statusCode: number, message: string) {
+    super(`Remote error (${statusCode}): ${message}`);
+    this.name = 'RemoteError';
+    this.statusCode = statusCode;
+  }
+}
+
+export class RemoteNotConfiguredError extends SDDError {
+  constructor() {
+    super('Remote not configured. Run "sdd remote init" first.');
+    this.name = 'RemoteNotConfiguredError';
+  }
+}

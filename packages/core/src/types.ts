@@ -1,4 +1,4 @@
-export type StoryFileStatus = 'new' | 'changed' | 'deleted' | 'synced';
+export type StoryFileStatus = 'draft' | 'new' | 'changed' | 'deleted' | 'synced';
 
 export interface StoryFrontmatter {
   title: string;
@@ -49,10 +49,15 @@ export interface ValidationIssue {
 export interface StoryStatus {
   files: Array<{
     relativePath: string;
-    status: 'new' | 'changed' | 'deleted' | 'synced';
+    status: StoryFileStatus;
     version: string;
     lastModified: string;
   }>;
+}
+
+export interface RemoteConfig {
+  url: string;
+  'api-key'?: string;
 }
 
 export interface SDDConfig {
@@ -60,9 +65,10 @@ export interface SDDConfig {
   'last-sync-commit'?: string;
   agent?: string;
   agents?: Record<string, string>;
+  remote?: RemoteConfig;
 }
 
-export type ChangeRequestStatus = 'draft' | 'applied';
+export type ChangeRequestStatus = 'draft' | 'pending' | 'applied';
 
 export interface ChangeRequestFrontmatter {
   title: string;
@@ -77,7 +83,7 @@ export interface ChangeRequest {
   body: string;
 }
 
-export type BugStatus = 'open' | 'resolved';
+export type BugStatus = 'draft' | 'open' | 'resolved';
 
 export interface BugFrontmatter {
   title: string;

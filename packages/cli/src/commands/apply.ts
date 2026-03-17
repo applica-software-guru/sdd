@@ -16,7 +16,7 @@ export function registerApply(program: Command): void {
 
       const prompt = await sdd.applyPrompt();
       if (!prompt) {
-        console.log(info('Nothing to apply — no open bugs, pending CRs, or pending files.'));
+        console.log(info('Nothing to apply — no drafts, open bugs, pending CRs, or pending files.'));
         return;
       }
 

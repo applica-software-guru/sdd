@@ -13,6 +13,10 @@ import { registerApply } from "./commands/apply.js";
 import { registerAdapters } from "./commands/adapters.js";
 import { registerUI } from "./commands/ui.js";
 import { registerUpgrade } from "./commands/upgrade.js";
+import { registerRemote } from "./commands/remote.js";
+import { registerPull } from "./commands/pull.js";
+import { registerPush } from "./commands/push.js";
+import { registerMarkDraftsEnriched } from "./commands/mark-drafts-enriched.js";
 
 const packageRequire = createRequire(__filename);
 const packageJson = packageRequire("../package.json") as { version: string };
@@ -36,6 +40,10 @@ registerApply(program);
 registerAdapters(program);
 registerUI(program);
 registerUpgrade(program);
+registerRemote(program);
+registerPull(program);
+registerPush(program);
+registerMarkDraftsEnriched(program);
 
 program.parseAsync().catch((err) => {
   console.error(err.message);

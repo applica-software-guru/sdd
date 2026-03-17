@@ -5,6 +5,8 @@ import { heading, info } from '../ui/format.js';
 
 function statusLabel(status: string): string {
   switch (status) {
+    case 'draft':
+      return chalk.magenta('draft');
     case 'open':
       return chalk.yellow('open');
     case 'resolved':
@@ -33,7 +35,7 @@ export function registerBug(program: Command): void {
       }
 
       for (const b of bugs) {
-        const icon = b.frontmatter.status === 'resolved' ? chalk.green('  ✓') : chalk.yellow('  ●');
+        const icon = b.frontmatter.status === 'resolved' ? chalk.green('  ✓') : b.frontmatter.status === 'draft' ? chalk.magenta('  ◇') : chalk.yellow('  ●');
         console.log(`${icon} ${chalk.white(b.relativePath)} ${chalk.dim(`[${statusLabel(b.frontmatter.status)}]`)} ${chalk.cyan(b.frontmatter.title)}`);
       }
       console.log('');

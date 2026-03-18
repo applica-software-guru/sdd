@@ -170,6 +170,7 @@ export async function pushToRemote(root: string, options?: PushOptions): Promise
         path: normalizePath(cr.relativePath),
         title: cr.frontmatter.title,
         body: cr.body,
+        status: cr.frontmatter.status,
         ...(tracked ? { id: tracked.remoteId } : {}),
       };
     });
@@ -211,6 +212,7 @@ export async function pushToRemote(root: string, options?: PushOptions): Promise
         path: normalizePath(bug.relativePath),
         title: bug.frontmatter.title,
         body: bug.body,
+        status: bug.frontmatter.status,
         ...(tracked ? { id: tracked.remoteId } : {}),
       };
     });
@@ -351,7 +353,7 @@ export async function pullCRsFromRemote(root: string, timeout?: number): Promise
   let updated = 0;
 
   for (const cr of remoteCRs) {
-    const localPath = idToPath.get(cr.id) ?? `change-requests/CR-${cr.id.substring(0, 8)}.md`;
+    const localPath = cr.path ?? idToPath.get(cr.id) ?? `change-requests/CR-${cr.id.substring(0, 8)}.md`;
     const absPath = resolve(root, localPath);
     const dir = dirname(absPath);
     if (!existsSync(dir)) {
@@ -425,7 +427,7 @@ export async function pullBugsFromRemote(root: string, timeout?: number): Promis
   let updated = 0;
 
   for (const bug of remoteBugs) {
-    const localPath = idToPath.get(bug.id) ?? `bugs/BUG-${bug.id.substring(0, 8)}.md`;
+    const localPath = bug.path ?? idToPath.get(bug.id) ?? `bugs/BUG-${bug.id.substring(0, 8)}.md`;
     const absPath = resolve(root, localPath);
     const dir = dirname(absPath);
     if (!existsSync(dir)) {

@@ -23,6 +23,7 @@ export interface RemoteDocBulkResponse {
 export interface RemoteCRResponse {
   id: string;
   project_id: string;
+  path: string | null;
   title: string;
   body: string;
   status: string;
@@ -38,6 +39,7 @@ export interface RemoteCRResponse {
 export interface RemoteBugResponse {
   id: string;
   project_id: string;
+  path: string | null;
   title: string;
   body: string;
   status: string;

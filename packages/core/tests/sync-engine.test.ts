@@ -252,10 +252,11 @@ describe('Sync engine - pull CRs', () => {
     await rm(tempDir, { recursive: true });
   });
 
-  it('creates local CR files from remote', async () => {
+  it('creates local CR files from remote (no path — fallback to ID)', async () => {
     const cr: RemoteCRResponse = {
       id: 'abcdef01-1234-5678-abcd-ef0123456789',
       project_id: 'proj-001',
+      path: null,
       title: 'Add auth flow',
       body: '## Description\n\nAdd JWT authentication.',
       status: 'draft',
@@ -284,6 +285,83 @@ describe('Sync engine - pull CRs', () => {
     expect(content).toContain('status: draft');
     expect(content).toContain('JWT authentication');
   });
+
+  it('uses remote path field to create CR at correct location', async () => {
+    const cr: RemoteCRResponse = {
+      id: 'abcdef01-1234-5678-abcd-ef0123456789',
+      project_id: 'proj-001',
+      path: 'change-requests/001-add-auth-flow.md',
+      title: 'Add auth flow',
+      body: '## Description\n\nAdd JWT authentication.',
+      status: 'pending',
+      author_id: 'user-1',
+      assignee_id: null,
+      target_files: null,
+      closed_at: null,
+      created_at: '2026-01-01T00:00:00.000Z',
+      updated_at: '2026-01-01T00:00:00.000Z',
+    };
+
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => [cr],
+    });
+
+    const result = await sdd.pullCRs();
+    expect(result.created).toBe(1);
+
+    // Should use path from remote, NOT CR-abcdef01.md
+    const correctPath = join(tempDir, 'change-requests', '001-add-auth-flow.md');
+    const wrongPath = join(tempDir, 'change-requests', 'CR-abcdef01.md');
+    expect(existsSync(correctPath)).toBe(true);
+    expect(existsSync(wrongPath)).toBe(false);
+  });
+
+  it('pull does not overwrite CR when body is identical', async () => {
+    // Create a local CR file
+    const localCR = `---
+title: "Add auth flow"
+status: pending
+author: "alice"
+created-at: "2026-01-01T00:00:00.000Z"
+---
+
+## Description
+
+Add JWT authentication.
+`;
+    await mkdir(join(tempDir, 'change-requests'), { recursive: true });
+    await writeFile(join(tempDir, 'change-requests/001-auth.md'), localCR, 'utf-8');
+
+    const cr: RemoteCRResponse = {
+      id: 'cr-001',
+      project_id: 'proj-001',
+      path: 'change-requests/001-auth.md',
+      title: 'Add auth flow',
+      body: '## Description\n\nAdd JWT authentication.',
+      status: 'pending',
+      author_id: 'user-1',
+      assignee_id: null,
+      target_files: null,
+      closed_at: null,
+      created_at: '2026-01-01T00:00:00.000Z',
+      updated_at: '2026-01-01T00:00:00.000Z',
+    };
+
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => [cr],
+    });
+
+    await sdd.pullCRs();
+
+    // File should be UNTOUCHED — same content, original frontmatter preserved
+    const content = await readFile(join(tempDir, 'change-requests/001-auth.md'), 'utf-8');
+    expect(content).toContain('author: "alice"');
+    expect(content).toContain('title: "Add auth flow"');
+  });
 });
 
 describe('Sync engine - pull bugs', () => {
@@ -307,10 +385,11 @@ describe('Sync engine - pull bugs', () => {
     await rm(tempDir, { recursive: true });
   });
 
-  it('creates local bug files from remote', async () => {
+  it('creates local bug files from remote (no path — fallback to ID)', async () => {
     const bug: RemoteBugResponse = {
       id: '12345678-abcd-ef01-2345-678901234567',
       project_id: 'proj-001',
+      path: null,
       title: 'Search returns stale results',
       body: '## Steps\n\n1. Search for a term\n2. Results are outdated',
       status: 'open',
@@ -338,5 +417,171 @@ describe('Sync engine - pull bugs', () => {
     expect(content).toContain('title: Search returns stale results');
     expect(content).toContain('status: open');
     expect(content).toContain('Results are outdated');
+  });
+
+  it('uses remote path field to create bug at correct location', async () => {
+    const bug: RemoteBugResponse = {
+      id: '12345678-abcd-ef01-2345-678901234567',
+      project_id: 'proj-001',
+      path: 'bugs/001-stale-search.md',
+      title: 'Search returns stale results',
+      body: '## Steps\n\n1. Search for a term\n2. Results are outdated',
+      status: 'open',
+      severity: 'major',
+      author_id: 'user-1',
+      assignee_id: null,
+      closed_at: null,
+      created_at: '2026-02-01T00:00:00.000Z',
+      updated_at: '2026-02-01T00:00:00.000Z',
+    };
+
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => [bug],
+    });
+
+    const result = await sdd.pullBugs();
+    expect(result.created).toBe(1);
+
+    // Should use path from remote, NOT BUG-12345678.md
+    const correctPath = join(tempDir, 'bugs', '001-stale-search.md');
+    const wrongPath = join(tempDir, 'bugs', 'BUG-12345678.md');
+    expect(existsSync(correctPath)).toBe(true);
+    expect(existsSync(wrongPath)).toBe(false);
+  });
+});
+
+describe('Sync engine - push→pull round-trip', () => {
+  let tempDir: string;
+  let sdd: SDD;
+  let originalFetch: typeof globalThis.fetch;
+
+  beforeEach(async () => {
+    originalFetch = globalThis.fetch;
+    tempDir = await mkdtemp(join(tmpdir(), 'sdd-roundtrip-'));
+    sdd = new SDD({ root: tempDir });
+    await sdd.init({ description: 'test' });
+    git('config user.email "test@test.com"', tempDir);
+    git('config user.name "Test"', tempDir);
+    const { writeConfig, readConfig } = await import('../src/config/config-manager.js');
+    const config = await readConfig(tempDir);
+    config.remote = { url: 'http://test.local/api/v1', 'api-key': 'test-key' };
+    await writeConfig(tempDir, config);
+  });
+
+  afterEach(async () => {
+    globalThis.fetch = originalFetch;
+    await rm(tempDir, { recursive: true });
+  });
+
+  it('push then pull preserves document file content exactly', async () => {
+    const docContent = `---
+title: "Product Vision"
+status: new
+author: "bruno.fortunato@applica.guru"
+last-modified: "2026-03-05T00:00:00.000Z"
+version: "1.0"
+---
+
+# Product Vision
+
+Easypick is a marketplace for on-demand services.
+`;
+    await writeFile(join(tempDir, 'product/vision.md'), docContent, 'utf-8');
+
+    // Push — mock server response
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        created: 1, updated: 0,
+        documents: [makeDocResponse({
+          path: 'product/vision.md',
+          content: '# Product Vision\n\nEasypick is a marketplace for on-demand services.\n',
+          version: 1,
+        })],
+      }),
+    });
+    await sdd.push();
+
+    // Read file after push (status changed to synced)
+    const afterPush = await readFile(join(tempDir, 'product/vision.md'), 'utf-8');
+    expect(afterPush).toContain('status: synced');
+
+    // Pull — server returns same content, higher version
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => [makeDocResponse({
+        path: 'product/vision.md',
+        content: '# Product Vision\n\nEasypick is a marketplace for on-demand services.\n',
+        version: 5,
+      })],
+    });
+    await sdd.pull();
+
+    // File should be IDENTICAL to after-push — no frontmatter corruption
+    const afterPull = await readFile(join(tempDir, 'product/vision.md'), 'utf-8');
+    expect(afterPull).toBe(afterPush);
+    // Verify original frontmatter preserved
+    expect(afterPull).toContain('author: "bruno.fortunato@applica.guru"');
+    expect(afterPull).toContain('last-modified: "2026-03-05T00:00:00.000Z"');
+    expect(afterPull).toContain('version: "1.0"');
+  });
+
+  it('push then pull preserves CR file at original path', async () => {
+    const crContent = `---
+title: "Area Geografica su Leaflet"
+status: pending
+author: "team"
+created-at: "2026-03-01T00:00:00.000Z"
+---
+
+# Area Geografica su Leaflet
+
+Implementare la selezione area su mappa.
+`;
+    await mkdir(join(tempDir, 'change-requests'), { recursive: true });
+    await writeFile(join(tempDir, 'change-requests/001-area-geografica.md'), crContent, 'utf-8');
+
+    // Push — mock server stores the path
+    const crResponse: RemoteCRResponse = {
+      id: 'cr-abc123',
+      project_id: 'proj-001',
+      path: 'change-requests/001-area-geografica.md',
+      title: 'Area Geografica su Leaflet',
+      body: '# Area Geografica su Leaflet\n\nImplementare la selezione area su mappa.\n',
+      status: 'pending',
+      author_id: 'user-1',
+      assignee_id: null,
+      target_files: null,
+      closed_at: null,
+      created_at: '2026-03-01T00:00:00.000Z',
+      updated_at: '2026-03-01T00:00:00.000Z',
+    };
+
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ created: 1, updated: 0, change_requests: [crResponse] }),
+    });
+    await sdd.push();
+
+    // Pull — server returns same CR with path
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => [crResponse],
+    });
+    await sdd.pullCRs();
+
+    // Original file should still exist, untouched
+    const afterPull = await readFile(join(tempDir, 'change-requests/001-area-geografica.md'), 'utf-8');
+    expect(afterPull).toContain('author: "team"');
+    expect(afterPull).toContain('title: "Area Geografica su Leaflet"');
+
+    // No ID-based duplicate should exist
+    expect(existsSync(join(tempDir, 'change-requests/CR-cr-abc12.md'))).toBe(false);
   });
 });

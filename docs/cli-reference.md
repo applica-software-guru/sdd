@@ -227,3 +227,61 @@ sdd mark-bug-resolved bugs/BUG-001.md
 # Mark all open bugs
 sdd mark-bug-resolved
 ```
+
+## Remote sync
+
+For full details, see [Remote Sync](remote-sync.md).
+
+### `sdd remote init`
+
+Configure the connection to an SDD Flow instance. Prompts for URL and API key, tests the connection.
+
+```bash
+sdd remote init
+
+# Non-interactive
+sdd remote init --url https://sdd.applica.guru/api/v1 --api-key sk-...
+```
+
+### `sdd remote status`
+
+Show remote connection status, pending local files, and remote document count.
+
+```bash
+sdd remote status
+```
+
+### `sdd push [files...] [--all]`
+
+Push local documents to the remote.
+
+```bash
+# Push pending files (status: new or changed)
+sdd push
+
+# Push specific files
+sdd push product/vision.md system/entities.md
+
+# Push ALL files including synced — useful for first sync
+sdd push --all
+```
+
+### `sdd pull`
+
+Pull documents, change requests, and bugs from the remote.
+
+```bash
+sdd pull
+sdd pull --docs-only
+sdd pull --crs-only
+sdd pull --bugs-only
+```
+
+### `sdd mark-drafts-enriched [files...]`
+
+Mark draft elements as enriched after AI processing.
+
+```bash
+sdd mark-drafts-enriched
+sdd mark-drafts-enriched product/vision.md
+```

@@ -68,13 +68,19 @@ function buildBugMarkdown(title: string, body: string, createdAt: string, status
 
 // ─── Push ────────────────────────────────────────────────────────────────
 
-export async function pushToRemote(root: string, paths?: string[]): Promise<PushResult> {
+export interface PushOptions {
+  paths?: string[];
+  all?: boolean;
+}
+
+export async function pushToRemote(root: string, options?: PushOptions): Promise<PushResult> {
   const config = await readConfig(root);
   const api = buildApiConfig(config);
 
   const files = await parseAllStoryFiles(root);
   const toPush = files.filter((f) => {
-    if (paths && paths.length > 0) return paths.includes(f.relativePath);
+    if (options?.paths && options.paths.length > 0) return options.paths.includes(f.relativePath);
+    if (options?.all) return true;
     return f.frontmatter.status !== 'synced';
   });
 

@@ -15,7 +15,7 @@ export function registerPush(program: Command): void {
       console.log(chalk.dim('  Pushing documents...'));
 
       const paths = files.length > 0 ? files : undefined;
-      const result = await sdd.push(paths);
+      const result = await sdd.push(paths, { all: options.all });
 
       if (result.pushed.length === 0) {
         console.log(info('No pending files to push.\n'));

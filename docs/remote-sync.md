@@ -53,9 +53,11 @@ Shows connection status, pending local files, and remote document count.
   Remote docs:   12
 ```
 
-### `sdd push [files...]`
+### `sdd push [files...] [--all]`
 
 Push local documents to the remote. By default, only files with `status: new` or `status: changed` are pushed. After a successful push, files are marked as `status: synced`. Files with `status: draft` are pushed but **not** marked as synced — they need AI enrichment first.
+
+Use `--all` to push **every** file regardless of status, including files already marked as `synced`. This is useful for the first sync of a project that was created and worked on locally before configuring a remote.
 
 ```bash
 # Push all pending files
@@ -63,6 +65,9 @@ sdd push
 
 # Push specific files
 sdd push product/vision.md system/entities.md
+
+# Push ALL files (including synced) — useful for first sync
+sdd push --all
 ```
 
 ### `sdd pull`
@@ -153,7 +158,7 @@ This file should be committed to version control so all team members share the s
 
 ```
 1. Parse all story files in the project
-2. Filter to files with status != "synced" (or specific paths)
+2. Filter to files with status != "synced" (or specific paths, or all files when --all is used)
 3. POST /cli/push-docs with document content
 4. Update remote-state.json with new versions
 5. Mark pushed files as status: synced (except drafts)
@@ -202,6 +207,9 @@ const status = await sdd.remoteStatus();
 
 // Push pending docs
 const pushResult = await sdd.push();
+
+// Push ALL docs (including synced) — first sync scenario
+const fullPush = await sdd.push(undefined, { all: true });
 
 // Pull everything
 const pullResult = await sdd.pull();

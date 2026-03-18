@@ -259,9 +259,9 @@ export class SDD {
     return getRemoteStatus(this.root);
   }
 
-  async push(paths?: string[]): Promise<PushResult> {
+  async push(paths?: string[], options?: { all?: boolean }): Promise<PushResult> {
     this.ensureInitialized();
-    return pushToRemote(this.root, paths);
+    return pushToRemote(this.root, { paths, all: options?.all });
   }
 
   async pull(): Promise<PullResult> {

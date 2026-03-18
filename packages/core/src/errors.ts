@@ -35,6 +35,13 @@ export class RemoteError extends SDDError {
   }
 }
 
+export class RemoteTimeoutError extends SDDError {
+  constructor(timeoutSeconds: number) {
+    super(`Remote server did not respond within ${timeoutSeconds}s. You can increase the timeout with --timeout or remote.timeout in .sdd/config.yaml`);
+    this.name = 'RemoteTimeoutError';
+  }
+}
+
 export class RemoteNotConfiguredError extends SDDError {
   constructor() {
     super('Remote not configured. Run "sdd remote init" first.');

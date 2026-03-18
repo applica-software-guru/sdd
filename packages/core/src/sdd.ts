@@ -254,29 +254,29 @@ export class SDD {
 
   // ── Remote sync ──────────────────────────────────────────────────────
 
-  async remoteStatus(): Promise<RemoteStatusResult> {
+  async remoteStatus(timeout?: number): Promise<RemoteStatusResult> {
     this.ensureInitialized();
-    return getRemoteStatus(this.root);
+    return getRemoteStatus(this.root, timeout);
   }
 
-  async push(paths?: string[], options?: { all?: boolean }): Promise<PushResult> {
+  async push(paths?: string[], options?: { all?: boolean; timeout?: number }): Promise<PushResult> {
     this.ensureInitialized();
-    return pushToRemote(this.root, { paths, all: options?.all });
+    return pushToRemote(this.root, { paths, all: options?.all, timeout: options?.timeout });
   }
 
-  async pull(): Promise<PullResult> {
+  async pull(timeout?: number): Promise<PullResult> {
     this.ensureInitialized();
-    return pullFromRemote(this.root);
+    return pullFromRemote(this.root, timeout);
   }
 
-  async pullCRs(): Promise<PullEntitiesResult> {
+  async pullCRs(timeout?: number): Promise<PullEntitiesResult> {
     this.ensureInitialized();
-    return pullCRsFromRemote(this.root);
+    return pullCRsFromRemote(this.root, timeout);
   }
 
-  async pullBugs(): Promise<PullEntitiesResult> {
+  async pullBugs(timeout?: number): Promise<PullEntitiesResult> {
     this.ensureInitialized();
-    return pullBugsFromRemote(this.root);
+    return pullBugsFromRemote(this.root, timeout);
   }
 
   private ensureInitialized(): void {

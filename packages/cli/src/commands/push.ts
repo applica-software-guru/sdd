@@ -8,14 +8,15 @@ export function registerPush(program: Command): void {
     .command('push [files...]')
     .description('Push pending documents to remote')
     .option('--all', 'Push all files including synced')
-    .action(async (files: string[], options: { all?: boolean }) => {
+    .option('--timeout <seconds>', 'Remote request timeout in seconds (default: 300)', parseInt)
+    .action(async (files: string[], options: { all?: boolean; timeout?: number }) => {
       const sdd = new SDD({ root: process.cwd() });
 
       console.log(heading('Push to Remote'));
       console.log(chalk.dim('  Pushing documents...'));
 
       const paths = files.length > 0 ? files : undefined;
-      const result = await sdd.push(paths, { all: options.all });
+      const result = await sdd.push(paths, { all: options.all, timeout: options.timeout });
 
       if (result.pushed.length === 0) {
         console.log(info('No pending files to push.\n'));

@@ -18,7 +18,7 @@ export type {
   BugStatus,
   RemoteConfig,
 } from "./types.js";
-export { SDDError, LockFileNotFoundError, ParseError, ProjectNotInitializedError, RemoteError, RemoteNotConfiguredError } from "./errors.js";
+export { SDDError, LockFileNotFoundError, ParseError, ProjectNotInitializedError, RemoteError, RemoteNotConfiguredError, RemoteTimeoutError } from "./errors.js";
 export type { ProjectInfo } from "./scaffold/templates.js";
 export { isSDDProject, readConfig, writeConfig } from "./config/config-manager.js";
 export { runAgent } from "./agent/agent-runner.js";
@@ -37,7 +37,7 @@ export type {
 // Remote sync
 export { generateDraftEnrichmentPrompt } from "./prompt/draft-prompt-generator.js";
 export type { DraftElements } from "./prompt/draft-prompt-generator.js";
-export { resolveApiKey, buildApiConfig, pullDocs, pushDocs, fetchPendingCRs, fetchOpenBugs, markCRAppliedRemote, markBugResolvedRemote, markDocEnriched, markCREnriched, markBugEnriched } from "./remote/api-client.js";
+export { resolveApiKey, buildApiConfig, pullDocs, pushDocs, fetchPendingCRs, fetchOpenBugs, markCRAppliedRemote, markBugResolvedRemote, markDocEnriched, markCREnriched, markBugEnriched, DEFAULT_REMOTE_TIMEOUT } from "./remote/api-client.js";
 export type { ApiClientConfig } from "./remote/api-client.js";
 export { readRemoteState, writeRemoteState } from "./remote/state.js";
 export { pushToRemote, pullFromRemote, pullCRsFromRemote, pullBugsFromRemote, getRemoteStatus } from "./remote/sync-engine.js";

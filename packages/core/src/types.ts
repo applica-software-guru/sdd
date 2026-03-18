@@ -58,6 +58,7 @@ export interface StoryStatus {
 export interface RemoteConfig {
   url: string;
   'api-key'?: string;
+  timeout?: number;
 }
 
 export interface SDDConfig {

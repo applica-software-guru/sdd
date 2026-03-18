@@ -1,5 +1,5 @@
 import type { SDDConfig } from '../types.js';
-import { RemoteError, RemoteNotConfiguredError } from '../errors.js';
+import { RemoteError, RemoteNotConfiguredError, RemoteTimeoutError } from '../errors.js';
 import type {
   RemoteDocResponse,
   RemoteDocBulkResponse,
@@ -9,9 +9,22 @@ import type {
   RemoteBugBulkResponse,
 } from './types.js';
 
+/** Default timeout for remote operations (seconds) */
+export const DEFAULT_REMOTE_TIMEOUT = 300;
+
+/** Status codes that trigger a retry (server not ready / cold start) */
+const RETRYABLE_STATUS_CODES = new Set([502, 503, 504]);
+
+/** Initial backoff delay in ms */
+const INITIAL_BACKOFF_MS = 3_000;
+
+/** Maximum backoff delay in ms */
+const MAX_BACKOFF_MS = 30_000;
+
 export interface ApiClientConfig {
   baseUrl: string;
   apiKey: string;
+  timeout: number;
 }
 
 /**
@@ -27,7 +40,12 @@ export function resolveApiKey(config: SDDConfig): string | null {
  * Build an ApiClientConfig from the SDD project config.
  * Throws RemoteNotConfiguredError if URL or API key is missing.
  */
-export function buildApiConfig(config: SDDConfig): ApiClientConfig {
+/**
+ * Build an ApiClientConfig from the SDD project config.
+ * Throws RemoteNotConfiguredError if URL or API key is missing.
+ * An optional timeoutOverride (from --timeout flag) takes precedence over config.
+ */
+export function buildApiConfig(config: SDDConfig, timeoutOverride?: number): ApiClientConfig {
   if (!config.remote?.url) {
     throw new RemoteNotConfiguredError();
   }
@@ -38,7 +56,22 @@ export function buildApiConfig(config: SDDConfig): ApiClientConfig {
   return {
     baseUrl: config.remote.url.replace(/\/+$/, ''),
     apiKey,
+    timeout: timeoutOverride ?? config.remote.timeout ?? DEFAULT_REMOTE_TIMEOUT,
   };
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetryable(error: unknown): boolean {
+  if (error instanceof RemoteError) {
+    return RETRYABLE_STATUS_CODES.has(error.statusCode);
+  }
+  // Network errors (ECONNREFUSED, ENOTFOUND, fetch abort due to connection failure)
+  if (error instanceof TypeError) return true;
+  const code = (error as NodeJS.ErrnoException).code;
+  return code === 'ECONNREFUSED' || code === 'ECONNRESET' || code === 'ENOTFOUND' || code === 'UND_ERR_CONNECT_TIMEOUT';
 }
 
 async function request<T>(
@@ -53,24 +86,82 @@ async function request<T>(
     'Content-Type': 'application/json',
   };
 
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: body != null ? JSON.stringify(body) : undefined,
-  });
+  const deadline = Date.now() + config.timeout * 1_000;
+  let backoff = INITIAL_BACKOFF_MS;
+  let attempt = 0;
 
-  if (!res.ok) {
-    let message: string;
-    try {
-      const err = (await res.json()) as { detail?: string };
-      message = err.detail ?? res.statusText;
-    } catch {
-      message = res.statusText;
+  while (true) {
+    attempt++;
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) {
+      throw new RemoteTimeoutError(config.timeout);
     }
-    throw new RemoteError(res.status, message);
-  }
 
-  return (await res.json()) as T;
+    // Per-request timeout: min of remaining budget and 60s
+    const perRequestTimeout = Math.min(remaining, 60_000);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), perRequestTimeout);
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers,
+        body: body != null ? JSON.stringify(body) : undefined,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timer);
+
+      if (!res.ok) {
+        let message: string;
+        try {
+          const err = (await res.json()) as { detail?: string };
+          message = err.detail ?? res.statusText;
+        } catch {
+          message = res.statusText;
+        }
+        const remoteErr = new RemoteError(res.status, message);
+
+        if (RETRYABLE_STATUS_CODES.has(res.status) && Date.now() + backoff < deadline) {
+          process.stderr.write(`  ⏳ Server not ready (${res.status}), retrying in ${Math.round(backoff / 1000)}s... (attempt ${attempt})\n`);
+          await sleep(backoff);
+          backoff = Math.min(backoff * 2, MAX_BACKOFF_MS);
+          continue;
+        }
+
+        throw remoteErr;
+      }
+
+      return (await res.json()) as T;
+    } catch (error) {
+      clearTimeout(timer);
+
+      if (error instanceof RemoteError || error instanceof RemoteTimeoutError) {
+        throw error;
+      }
+
+      // Retryable network/connection error
+      if (isRetryable(error) && Date.now() + backoff < deadline) {
+        process.stderr.write(`  ⏳ Cannot reach server, retrying in ${Math.round(backoff / 1000)}s... (attempt ${attempt})\n`);
+        await sleep(backoff);
+        backoff = Math.min(backoff * 2, MAX_BACKOFF_MS);
+        continue;
+      }
+
+      // AbortError from our own timeout
+      if ((error as Error).name === 'AbortError') {
+        if (Date.now() + backoff < deadline) {
+          process.stderr.write(`  ⏳ Request timed out, retrying in ${Math.round(backoff / 1000)}s... (attempt ${attempt})\n`);
+          await sleep(backoff);
+          backoff = Math.min(backoff * 2, MAX_BACKOFF_MS);
+          continue;
+        }
+        throw new RemoteTimeoutError(config.timeout);
+      }
+
+      throw error;
+    }
+  }
 }
 
 /** GET /cli/pull-docs */

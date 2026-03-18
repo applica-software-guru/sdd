@@ -10,7 +10,8 @@ export function registerPull(program: Command): void {
     .option('--docs-only', 'Only pull documents')
     .option('--crs-only', 'Only pull change requests')
     .option('--bugs-only', 'Only pull bugs')
-    .action(async (options: { docsOnly?: boolean; crsOnly?: boolean; bugsOnly?: boolean }) => {
+    .option('--timeout <seconds>', 'Remote request timeout in seconds (default: 300)', parseInt)
+    .action(async (options: { docsOnly?: boolean; crsOnly?: boolean; bugsOnly?: boolean; timeout?: number }) => {
       const sdd = new SDD({ root: process.cwd() });
       const pullAll = !options.docsOnly && !options.crsOnly && !options.bugsOnly;
 
@@ -19,7 +20,7 @@ export function registerPull(program: Command): void {
       // Pull documents
       if (pullAll || options.docsOnly) {
         console.log(chalk.dim('  Pulling documents...'));
-        const result = await sdd.pull();
+        const result = await sdd.pull(options.timeout);
 
         if (result.created.length > 0) {
           for (const p of result.created) {
@@ -49,7 +50,7 @@ export function registerPull(program: Command): void {
       // Pull CRs
       if (pullAll || options.crsOnly) {
         console.log(chalk.dim('  Pulling change requests...'));
-        const crResult = await sdd.pullCRs();
+        const crResult = await sdd.pullCRs(options.timeout);
         if (crResult.created > 0 || crResult.updated > 0) {
           console.log(success(`${crResult.created} created, ${crResult.updated} updated`));
         } else {
@@ -61,7 +62,7 @@ export function registerPull(program: Command): void {
       // Pull bugs
       if (pullAll || options.bugsOnly) {
         console.log(chalk.dim('  Pulling bugs...'));
-        const bugResult = await sdd.pullBugs();
+        const bugResult = await sdd.pullBugs(options.timeout);
         if (bugResult.created > 0 || bugResult.updated > 0) {
           console.log(success(`${bugResult.created} created, ${bugResult.updated} updated`));
         } else {

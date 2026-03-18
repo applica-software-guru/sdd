@@ -73,11 +73,12 @@ function buildBugMarkdown(title: string, body: string, createdAt: string, status
 export interface PushOptions {
   paths?: string[];
   all?: boolean;
+  timeout?: number;
 }
 
 export async function pushToRemote(root: string, options?: PushOptions): Promise<PushResult> {
   const config = await readConfig(root);
-  const api = buildApiConfig(config);
+  const api = buildApiConfig(config, options?.timeout);
   const state = await readRemoteState(root);
   if (!state.changeRequests) state.changeRequests = {};
   if (!state.bugs) state.bugs = {};
@@ -226,9 +227,9 @@ export async function pushToRemote(root: string, options?: PushOptions): Promise
 
 // ─── Pull Documents ──────────────────────────────────────────────────────
 
-export async function pullFromRemote(root: string): Promise<PullResult> {
+export async function pullFromRemote(root: string, timeout?: number): Promise<PullResult> {
   const config = await readConfig(root);
-  const api = buildApiConfig(config);
+  const api = buildApiConfig(config, timeout);
 
   const remoteDocs = await pullDocs(api);
   const state = await readRemoteState(root);
@@ -300,9 +301,9 @@ function updateDocState(
 
 // ─── Pull CRs ────────────────────────────────────────────────────────────
 
-export async function pullCRsFromRemote(root: string): Promise<PullEntitiesResult> {
+export async function pullCRsFromRemote(root: string, timeout?: number): Promise<PullEntitiesResult> {
   const config = await readConfig(root);
-  const api = buildApiConfig(config);
+  const api = buildApiConfig(config, timeout);
 
   const remoteCRs = await fetchPendingCRs(api);
   const crDir = resolve(root, 'change-requests');
@@ -332,9 +333,9 @@ export async function pullCRsFromRemote(root: string): Promise<PullEntitiesResul
 
 // ─── Pull Bugs ───────────────────────────────────────────────────────────
 
-export async function pullBugsFromRemote(root: string): Promise<PullEntitiesResult> {
+export async function pullBugsFromRemote(root: string, timeout?: number): Promise<PullEntitiesResult> {
   const config = await readConfig(root);
-  const api = buildApiConfig(config);
+  const api = buildApiConfig(config, timeout);
 
   const remoteBugs = await fetchOpenBugs(api);
   const bugsDir = resolve(root, 'bugs');
@@ -364,7 +365,7 @@ export async function pullBugsFromRemote(root: string): Promise<PullEntitiesResu
 
 // ─── Remote Status ───────────────────────────────────────────────────────
 
-export async function getRemoteStatus(root: string): Promise<RemoteStatusResult> {
+export async function getRemoteStatus(root: string, timeout?: number): Promise<RemoteStatusResult> {
   const config = await readConfig(root);
 
   if (!config.remote?.url) {
@@ -375,7 +376,7 @@ export async function getRemoteStatus(root: string): Promise<RemoteStatusResult>
   const localPending = files.filter((f) => f.frontmatter.status !== 'synced').length;
 
   try {
-    const api = buildApiConfig(config);
+    const api = buildApiConfig(config, timeout);
     const docs = await pullDocs(api);
     return {
       configured: true,

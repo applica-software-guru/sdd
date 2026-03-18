@@ -306,6 +306,15 @@ export async function pullCRsFromRemote(root: string, timeout?: number): Promise
   const api = buildApiConfig(config, timeout);
 
   const remoteCRs = await fetchPendingCRs(api);
+  const state = await readRemoteState(root);
+  if (!state.changeRequests) state.changeRequests = {};
+
+  // Build reverse map: remoteId → localPath
+  const idToPath = new Map<string, string>();
+  for (const [localPath, entry] of Object.entries(state.changeRequests)) {
+    idToPath.set(entry.remoteId, localPath);
+  }
+
   const crDir = resolve(root, 'change-requests');
   if (!existsSync(crDir)) {
     await mkdir(crDir, { recursive: true });
@@ -315,8 +324,14 @@ export async function pullCRsFromRemote(root: string, timeout?: number): Promise
   let updated = 0;
 
   for (const cr of remoteCRs) {
-    const filename = `CR-${cr.id.substring(0, 8)}.md`;
-    const absPath = resolve(crDir, filename);
+    // Use the original local path if we pushed this CR before, otherwise generate a fallback
+    const localPath = idToPath.get(cr.id) ?? `change-requests/CR-${cr.id.substring(0, 8)}.md`;
+    const absPath = resolve(root, localPath);
+    const dir = dirname(absPath);
+    if (!existsSync(dir)) {
+      await mkdir(dir, { recursive: true });
+    }
+
     const crStatus = cr.status === 'draft' ? 'draft' : 'pending';
     const markdown = buildCRMarkdown(cr.title, cr.body, cr.created_at, crStatus);
 
@@ -326,8 +341,16 @@ export async function pullCRsFromRemote(root: string, timeout?: number): Promise
       created++;
     }
     await writeFile(absPath, markdown, 'utf-8');
+
+    // Update state so future pulls keep using the same path
+    state.changeRequests![normalizePath(localPath)] = {
+      remoteId: cr.id,
+      localHash: sha256(markdown),
+      lastSynced: new Date().toISOString(),
+    };
   }
 
+  await writeRemoteState(root, state);
   return { created, updated };
 }
 
@@ -338,6 +361,15 @@ export async function pullBugsFromRemote(root: string, timeout?: number): Promis
   const api = buildApiConfig(config, timeout);
 
   const remoteBugs = await fetchOpenBugs(api);
+  const state = await readRemoteState(root);
+  if (!state.bugs) state.bugs = {};
+
+  // Build reverse map: remoteId → localPath
+  const idToPath = new Map<string, string>();
+  for (const [localPath, entry] of Object.entries(state.bugs)) {
+    idToPath.set(entry.remoteId, localPath);
+  }
+
   const bugsDir = resolve(root, 'bugs');
   if (!existsSync(bugsDir)) {
     await mkdir(bugsDir, { recursive: true });
@@ -347,8 +379,14 @@ export async function pullBugsFromRemote(root: string, timeout?: number): Promis
   let updated = 0;
 
   for (const bug of remoteBugs) {
-    const filename = `BUG-${bug.id.substring(0, 8)}.md`;
-    const absPath = resolve(bugsDir, filename);
+    // Use the original local path if we pushed this bug before, otherwise generate a fallback
+    const localPath = idToPath.get(bug.id) ?? `bugs/BUG-${bug.id.substring(0, 8)}.md`;
+    const absPath = resolve(root, localPath);
+    const dir = dirname(absPath);
+    if (!existsSync(dir)) {
+      await mkdir(dir, { recursive: true });
+    }
+
     const bugStatus = bug.status === 'draft' ? 'draft' : 'open';
     const markdown = buildBugMarkdown(bug.title, bug.body, bug.created_at, bugStatus);
 
@@ -358,8 +396,16 @@ export async function pullBugsFromRemote(root: string, timeout?: number): Promis
       created++;
     }
     await writeFile(absPath, markdown, 'utf-8');
+
+    // Update state so future pulls keep using the same path
+    state.bugs![normalizePath(localPath)] = {
+      remoteId: bug.id,
+      localHash: sha256(markdown),
+      lastSynced: new Date().toISOString(),
+    };
   }
 
+  await writeRemoteState(root, state);
   return { created, updated };
 }
 

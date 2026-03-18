@@ -180,10 +180,11 @@ describe('Sync engine - pull', () => {
       },
     });
 
+    // Remote has DIFFERENT body content to trigger a real conflict
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => [makeDocResponse({ version: 2 })],
+      json: async () => [makeDocResponse({ version: 2, content: '# Product Vision\n\nUpdated on remote.\n' })],
     });
 
     const result = await sdd.pull();

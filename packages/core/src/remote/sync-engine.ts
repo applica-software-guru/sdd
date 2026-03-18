@@ -29,7 +29,8 @@ function normalizePath(p: string): string {
 }
 
 /**
- * Build a markdown file with frontmatter for a pulled document.
+ * Build a new markdown file with frontmatter — used ONLY for brand-new files
+ * that don't exist locally yet.
  */
 function buildStoryMarkdown(title: string, body: string, version: number, status: string = 'synced'): string {
   const fm = {
@@ -43,7 +44,7 @@ function buildStoryMarkdown(title: string, body: string, version: number, status
 }
 
 /**
- * Build a markdown file for a pulled change request.
+ * Build a new CR markdown — used ONLY for brand-new CRs that don't exist locally.
  */
 function buildCRMarkdown(title: string, body: string, createdAt: string, status: string = 'draft'): string {
   const fm = {
@@ -56,7 +57,7 @@ function buildCRMarkdown(title: string, body: string, createdAt: string, status:
 }
 
 /**
- * Build a markdown file for a pulled bug.
+ * Build a new bug markdown — used ONLY for brand-new bugs that don't exist locally.
  */
 function buildBugMarkdown(title: string, body: string, createdAt: string, status: string = 'open'): string {
   const fm = {
@@ -66,6 +67,28 @@ function buildBugMarkdown(title: string, body: string, createdAt: string, status
     'created-at': createdAt,
   };
   return matter.stringify(body, fm);
+}
+
+/**
+ * Replace only the body (after frontmatter) in a raw markdown string,
+ * preserving the exact original frontmatter formatting (quotes, order, etc.).
+ */
+function replaceBody(rawMarkdown: string, newBody: string): string {
+  const firstFence = rawMarkdown.indexOf('---');
+  if (firstFence === -1) return rawMarkdown;
+  const secondFence = rawMarkdown.indexOf('---', firstFence + 3);
+  if (secondFence === -1) return rawMarkdown;
+  const endOfFrontmatter = rawMarkdown.indexOf('\n', secondFence);
+  if (endOfFrontmatter === -1) return rawMarkdown;
+  return rawMarkdown.substring(0, endOfFrontmatter + 1) + '\n' + newBody + '\n';
+}
+
+/**
+ * Extract the body content from a raw markdown string (after frontmatter).
+ */
+function extractBody(rawMarkdown: string): string {
+  const parsed = matter(rawMarkdown);
+  return parsed.content.trim();
 }
 
 // ─── Push ────────────────────────────────────────────────────────────────
@@ -244,7 +267,7 @@ export async function pullFromRemote(root: string, timeout?: number): Promise<Pu
     const tracked = state.documents[localPath];
 
     if (!existsSync(absPath)) {
-      // New file — create locally, preserving remote status
+      // Brand-new file — create locally
       const dir = dirname(absPath);
       if (!existsSync(dir)) {
         await mkdir(dir, { recursive: true });
@@ -254,13 +277,22 @@ export async function pullFromRemote(root: string, timeout?: number): Promise<Pu
       await writeFile(absPath, markdown, 'utf-8');
       created.push(localPath);
       updateDocState(state, doc, localPath, markdown);
-    } else if (!tracked || doc.version > tracked.remoteVersion) {
-      // Remote is newer — check for local changes
-      const localContent = await readFile(absPath, 'utf-8');
-      const localHash = sha256(localContent);
+    } else {
+      // File exists locally — compare body content, not version numbers
+      const localRaw = await readFile(absPath, 'utf-8');
+      const localBody = extractBody(localRaw);
+      const remoteBody = doc.content.trim();
 
+      if (localBody === remoteBody) {
+        // Body identical — don't touch the file, just update tracking state
+        updateDocState(state, doc, localPath, localRaw);
+        continue;
+      }
+
+      // Body differs — check for conflict
+      const localHash = sha256(localRaw);
       if (tracked && localHash !== tracked.localHash) {
-        // Local file changed since last sync AND remote changed → conflict
+        // Both local and remote changed → conflict
         conflicts.push({
           path: localPath,
           localVersion: tracked.remoteVersion.toString(),
@@ -268,15 +300,15 @@ export async function pullFromRemote(root: string, timeout?: number): Promise<Pu
           reason: 'Both local and remote have changes since last sync',
         });
       } else {
-        // Local unchanged — safe to overwrite
-        const localStatus = doc.status === 'draft' ? 'draft' : 'synced';
-        const markdown = buildStoryMarkdown(doc.title, doc.content, doc.version, localStatus);
-        await writeFile(absPath, markdown, 'utf-8');
+        // Only remote body changed — surgically replace body, preserve frontmatter
+        const newStatus = doc.status === 'draft' ? 'draft' : 'synced';
+        let updatedContent = replaceBody(localRaw, doc.content);
+        updatedContent = updatedContent.replace(/^status:\s*.+/m, `status: ${newStatus}`);
+        await writeFile(absPath, updatedContent, 'utf-8');
         updated.push(localPath);
-        updateDocState(state, doc, localPath, markdown);
+        updateDocState(state, doc, localPath, updatedContent);
       }
     }
-    // If versions match, skip
   }
 
   state.lastPull = new Date().toISOString();
@@ -315,16 +347,10 @@ export async function pullCRsFromRemote(root: string, timeout?: number): Promise
     idToPath.set(entry.remoteId, localPath);
   }
 
-  const crDir = resolve(root, 'change-requests');
-  if (!existsSync(crDir)) {
-    await mkdir(crDir, { recursive: true });
-  }
-
   let created = 0;
   let updated = 0;
 
   for (const cr of remoteCRs) {
-    // Use the original local path if we pushed this CR before, otherwise generate a fallback
     const localPath = idToPath.get(cr.id) ?? `change-requests/CR-${cr.id.substring(0, 8)}.md`;
     const absPath = resolve(root, localPath);
     const dir = dirname(absPath);
@@ -332,22 +358,47 @@ export async function pullCRsFromRemote(root: string, timeout?: number): Promise
       await mkdir(dir, { recursive: true });
     }
 
-    const crStatus = cr.status === 'draft' ? 'draft' : 'pending';
-    const markdown = buildCRMarkdown(cr.title, cr.body, cr.created_at, crStatus);
-
     if (existsSync(absPath)) {
-      updated++;
-    } else {
-      created++;
-    }
-    await writeFile(absPath, markdown, 'utf-8');
+      // File exists — compare body, only update if changed
+      const localRaw = await readFile(absPath, 'utf-8');
+      const localBody = extractBody(localRaw);
+      const remoteBody = cr.body.trim();
 
-    // Update state so future pulls keep using the same path
-    state.changeRequests![normalizePath(localPath)] = {
-      remoteId: cr.id,
-      localHash: sha256(markdown),
-      lastSynced: new Date().toISOString(),
-    };
+      if (localBody === remoteBody) {
+        // Identical — don't touch the file
+        state.changeRequests![normalizePath(localPath)] = {
+          remoteId: cr.id,
+          localHash: sha256(localRaw),
+          lastSynced: new Date().toISOString(),
+        };
+        continue;
+      }
+
+      // Body changed — update body, preserve frontmatter
+      const newStatus = cr.status === 'draft' ? 'draft' : 'pending';
+      let updatedContent = replaceBody(localRaw, cr.body);
+      updatedContent = updatedContent.replace(/^status:\s*.+/m, `status: ${newStatus}`);
+      await writeFile(absPath, updatedContent, 'utf-8');
+      updated++;
+
+      state.changeRequests![normalizePath(localPath)] = {
+        remoteId: cr.id,
+        localHash: sha256(updatedContent),
+        lastSynced: new Date().toISOString(),
+      };
+    } else {
+      // Brand-new CR — create file
+      const crStatus = cr.status === 'draft' ? 'draft' : 'pending';
+      const markdown = buildCRMarkdown(cr.title, cr.body, cr.created_at, crStatus);
+      await writeFile(absPath, markdown, 'utf-8');
+      created++;
+
+      state.changeRequests![normalizePath(localPath)] = {
+        remoteId: cr.id,
+        localHash: sha256(markdown),
+        lastSynced: new Date().toISOString(),
+      };
+    }
   }
 
   await writeRemoteState(root, state);
@@ -370,16 +421,10 @@ export async function pullBugsFromRemote(root: string, timeout?: number): Promis
     idToPath.set(entry.remoteId, localPath);
   }
 
-  const bugsDir = resolve(root, 'bugs');
-  if (!existsSync(bugsDir)) {
-    await mkdir(bugsDir, { recursive: true });
-  }
-
   let created = 0;
   let updated = 0;
 
   for (const bug of remoteBugs) {
-    // Use the original local path if we pushed this bug before, otherwise generate a fallback
     const localPath = idToPath.get(bug.id) ?? `bugs/BUG-${bug.id.substring(0, 8)}.md`;
     const absPath = resolve(root, localPath);
     const dir = dirname(absPath);
@@ -387,22 +432,47 @@ export async function pullBugsFromRemote(root: string, timeout?: number): Promis
       await mkdir(dir, { recursive: true });
     }
 
-    const bugStatus = bug.status === 'draft' ? 'draft' : 'open';
-    const markdown = buildBugMarkdown(bug.title, bug.body, bug.created_at, bugStatus);
-
     if (existsSync(absPath)) {
-      updated++;
-    } else {
-      created++;
-    }
-    await writeFile(absPath, markdown, 'utf-8');
+      // File exists — compare body, only update if changed
+      const localRaw = await readFile(absPath, 'utf-8');
+      const localBody = extractBody(localRaw);
+      const remoteBody = bug.body.trim();
 
-    // Update state so future pulls keep using the same path
-    state.bugs![normalizePath(localPath)] = {
-      remoteId: bug.id,
-      localHash: sha256(markdown),
-      lastSynced: new Date().toISOString(),
-    };
+      if (localBody === remoteBody) {
+        // Identical — don't touch the file
+        state.bugs![normalizePath(localPath)] = {
+          remoteId: bug.id,
+          localHash: sha256(localRaw),
+          lastSynced: new Date().toISOString(),
+        };
+        continue;
+      }
+
+      // Body changed — update body, preserve frontmatter
+      const newStatus = bug.status === 'draft' ? 'draft' : 'open';
+      let updatedContent = replaceBody(localRaw, bug.body);
+      updatedContent = updatedContent.replace(/^status:\s*.+/m, `status: ${newStatus}`);
+      await writeFile(absPath, updatedContent, 'utf-8');
+      updated++;
+
+      state.bugs![normalizePath(localPath)] = {
+        remoteId: bug.id,
+        localHash: sha256(updatedContent),
+        lastSynced: new Date().toISOString(),
+      };
+    } else {
+      // Brand-new bug — create file
+      const bugStatus = bug.status === 'draft' ? 'draft' : 'open';
+      const markdown = buildBugMarkdown(bug.title, bug.body, bug.created_at, bugStatus);
+      await writeFile(absPath, markdown, 'utf-8');
+      created++;
+
+      state.bugs![normalizePath(localPath)] = {
+        remoteId: bug.id,
+        localHash: sha256(markdown),
+        lastSynced: new Date().toISOString(),
+      };
+    }
   }
 
   await writeRemoteState(root, state);

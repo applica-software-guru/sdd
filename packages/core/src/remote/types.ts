@@ -49,10 +49,31 @@ export interface RemoteBugResponse {
   updated_at: string;
 }
 
+/** Bulk push response from POST /cli/push-crs */
+export interface RemoteCRBulkResponse {
+  created: number;
+  updated: number;
+  change_requests: RemoteCRResponse[];
+}
+
+/** Bulk push response from POST /cli/push-bugs */
+export interface RemoteBugBulkResponse {
+  created: number;
+  updated: number;
+  bugs: RemoteBugResponse[];
+}
+
 /** Tracks per-document remote sync state */
 export interface RemoteDocState {
   remoteId: string;
   remoteVersion: number;
+  localHash: string;
+  lastSynced: string;
+}
+
+/** Tracks per-entity remote sync state (CRs, bugs) */
+export interface RemoteEntityState {
+  remoteId: string;
   localHash: string;
   lastSynced: string;
 }
@@ -62,6 +83,8 @@ export interface RemoteState {
   lastPull?: string;
   lastPush?: string;
   documents: Record<string, RemoteDocState>;
+  changeRequests?: Record<string, RemoteEntityState>;
+  bugs?: Record<string, RemoteEntityState>;
 }
 
 /** Result of a push operation */

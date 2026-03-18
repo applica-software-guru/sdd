@@ -10,7 +10,7 @@ function stateFilePath(root: string): string {
 }
 
 function emptyState(): RemoteState {
-  return { documents: {} };
+  return { documents: {}, changeRequests: {}, bugs: {} };
 }
 
 export async function readRemoteState(root: string): Promise<RemoteState> {

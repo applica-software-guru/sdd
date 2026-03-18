@@ -6,7 +6,9 @@ import matter from 'gray-matter';
 
 import { readConfig } from '../config/config-manager.js';
 import { parseAllStoryFiles } from '../parser/story-parser.js';
-import { buildApiConfig, pullDocs, pushDocs, fetchPendingCRs, fetchOpenBugs } from './api-client.js';
+import { parseAllCRFiles } from '../parser/cr-parser.js';
+import { parseAllBugFiles } from '../parser/bug-parser.js';
+import { buildApiConfig, pullDocs, pushDocs, pushCRs, pushBugs, fetchPendingCRs, fetchOpenBugs } from './api-client.js';
 import { readRemoteState, writeRemoteState } from './state.js';
 import type {
   PushResult,
@@ -76,7 +78,15 @@ export interface PushOptions {
 export async function pushToRemote(root: string, options?: PushOptions): Promise<PushResult> {
   const config = await readConfig(root);
   const api = buildApiConfig(config);
+  const state = await readRemoteState(root);
+  if (!state.changeRequests) state.changeRequests = {};
+  if (!state.bugs) state.bugs = {};
 
+  let totalCreated = 0;
+  let totalUpdated = 0;
+  const allPushed: string[] = [];
+
+  // ── Documents ──────────────────────────────────────────────────────────
   const files = await parseAllStoryFiles(root);
   const toPush = files.filter((f) => {
     if (options?.paths && options.paths.length > 0) return options.paths.includes(f.relativePath);
@@ -84,49 +94,133 @@ export async function pushToRemote(root: string, options?: PushOptions): Promise
     return f.frontmatter.status !== 'synced';
   });
 
-  if (toPush.length === 0) {
-    return { created: 0, updated: 0, pushed: [] };
+  if (toPush.length > 0) {
+    const documents = toPush.map((f) => ({
+      path: normalizePath(f.relativePath),
+      title: f.frontmatter.title,
+      content: f.body,
+    }));
+
+    const result = await pushDocs(api, documents);
+
+    for (const doc of result.documents) {
+      const localPath = doc.path;
+      const absPath = resolve(root, localPath);
+      const rawContent = existsSync(absPath) ? await readFile(absPath, 'utf-8') : '';
+      state.documents[localPath] = {
+        remoteId: doc.id,
+        remoteVersion: doc.version,
+        localHash: sha256(rawContent),
+        lastSynced: new Date().toISOString(),
+      };
+    }
+
+    // Mark local files as synced (drafts are excluded — they need AI enrichment first)
+    for (const f of toPush) {
+      if (f.frontmatter.status === 'draft') continue;
+      const absPath = resolve(root, f.relativePath);
+      const content = await readFile(absPath, 'utf-8');
+      const updated = content.replace(/^status:\s*(new|changed)/m, 'status: synced');
+      if (updated !== content) {
+        await writeFile(absPath, updated, 'utf-8');
+      }
+    }
+
+    totalCreated += result.created;
+    totalUpdated += result.updated;
+    allPushed.push(...toPush.map((f) => f.relativePath));
   }
 
-  const documents = toPush.map((f) => ({
-    path: normalizePath(f.relativePath),
-    title: f.frontmatter.title,
-    content: f.body,
-  }));
+  // ── Change Requests ────────────────────────────────────────────────────
+  const crFiles = await parseAllCRFiles(root);
+  const crsToPush = crFiles.filter((cr) => {
+    if (options?.paths && options.paths.length > 0) return options.paths.includes(cr.relativePath);
+    if (options?.all) return true;
+    return cr.frontmatter.status !== 'applied';
+  });
 
-  const result = await pushDocs(api, documents);
+  if (crsToPush.length > 0) {
+    const crPayload = crsToPush.map((cr) => {
+      const tracked = state.changeRequests![normalizePath(cr.relativePath)];
+      return {
+        path: normalizePath(cr.relativePath),
+        title: cr.frontmatter.title,
+        body: cr.body,
+        ...(tracked ? { id: tracked.remoteId } : {}),
+      };
+    });
 
-  // Update remote state
-  const state = await readRemoteState(root);
-  for (const doc of result.documents) {
-    const localPath = doc.path;
-    const absPath = resolve(root, localPath);
-    const rawContent = existsSync(absPath) ? await readFile(absPath, 'utf-8') : '';
-    state.documents[localPath] = {
-      remoteId: doc.id,
-      remoteVersion: doc.version,
-      localHash: sha256(rawContent),
-      lastSynced: new Date().toISOString(),
-    };
+    const crResult = await pushCRs(api, crPayload);
+
+    for (const cr of crResult.change_requests) {
+      const localPath = crsToPush.find(
+        (f) => f.frontmatter.title === cr.title,
+      )?.relativePath;
+      if (localPath) {
+        const absPath = resolve(root, localPath);
+        const rawContent = existsSync(absPath) ? await readFile(absPath, 'utf-8') : '';
+        state.changeRequests![normalizePath(localPath)] = {
+          remoteId: cr.id,
+          localHash: sha256(rawContent),
+          lastSynced: new Date().toISOString(),
+        };
+      }
+    }
+
+    totalCreated += crResult.created;
+    totalUpdated += crResult.updated;
+    allPushed.push(...crsToPush.map((cr) => cr.relativePath));
   }
+
+  // ── Bugs ───────────────────────────────────────────────────────────────
+  const bugFiles = await parseAllBugFiles(root);
+  const bugsToPush = bugFiles.filter((bug) => {
+    if (options?.paths && options.paths.length > 0) return options.paths.includes(bug.relativePath);
+    if (options?.all) return true;
+    return bug.frontmatter.status !== 'resolved';
+  });
+
+  if (bugsToPush.length > 0) {
+    const bugPayload = bugsToPush.map((bug) => {
+      const tracked = state.bugs![normalizePath(bug.relativePath)];
+      return {
+        path: normalizePath(bug.relativePath),
+        title: bug.frontmatter.title,
+        body: bug.body,
+        ...(tracked ? { id: tracked.remoteId } : {}),
+      };
+    });
+
+    const bugResult = await pushBugs(api, bugPayload);
+
+    for (const bug of bugResult.bugs) {
+      const localPath = bugsToPush.find(
+        (b) => b.frontmatter.title === bug.title,
+      )?.relativePath;
+      if (localPath) {
+        const absPath = resolve(root, localPath);
+        const rawContent = existsSync(absPath) ? await readFile(absPath, 'utf-8') : '';
+        state.bugs![normalizePath(localPath)] = {
+          remoteId: bug.id,
+          localHash: sha256(rawContent),
+          lastSynced: new Date().toISOString(),
+        };
+      }
+    }
+
+    totalCreated += bugResult.created;
+    totalUpdated += bugResult.updated;
+    allPushed.push(...bugsToPush.map((bug) => bug.relativePath));
+  }
+
+  // ── Finalize ───────────────────────────────────────────────────────────
   state.lastPush = new Date().toISOString();
   await writeRemoteState(root, state);
 
-  // Mark local files as synced (drafts are excluded — they need AI enrichment first)
-  for (const f of toPush) {
-    if (f.frontmatter.status === 'draft') continue;
-    const absPath = resolve(root, f.relativePath);
-    const content = await readFile(absPath, 'utf-8');
-    const updated = content.replace(/^status:\s*(new|changed)/m, 'status: synced');
-    if (updated !== content) {
-      await writeFile(absPath, updated, 'utf-8');
-    }
-  }
-
   return {
-    created: result.created,
-    updated: result.updated,
-    pushed: toPush.map((f) => f.relativePath),
+    created: totalCreated,
+    updated: totalUpdated,
+    pushed: allPushed,
   };
 }
 

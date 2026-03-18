@@ -4,7 +4,9 @@ import type {
   RemoteDocResponse,
   RemoteDocBulkResponse,
   RemoteCRResponse,
+  RemoteCRBulkResponse,
   RemoteBugResponse,
+  RemoteBugBulkResponse,
 } from './types.js';
 
 export interface ApiClientConfig {
@@ -89,9 +91,25 @@ export async function fetchPendingCRs(config: ApiClientConfig): Promise<RemoteCR
   return request<RemoteCRResponse[]>(config, 'GET', '/cli/pending-crs');
 }
 
+/** POST /cli/push-crs */
+export async function pushCRs(
+  config: ApiClientConfig,
+  changeRequests: Array<{ path: string; title: string; body: string; id?: string }>,
+): Promise<RemoteCRBulkResponse> {
+  return request<RemoteCRBulkResponse>(config, 'POST', '/cli/push-crs', { change_requests: changeRequests });
+}
+
 /** GET /cli/open-bugs */
 export async function fetchOpenBugs(config: ApiClientConfig): Promise<RemoteBugResponse[]> {
   return request<RemoteBugResponse[]>(config, 'GET', '/cli/open-bugs');
+}
+
+/** POST /cli/push-bugs */
+export async function pushBugs(
+  config: ApiClientConfig,
+  bugs: Array<{ path: string; title: string; body: string; severity?: string; id?: string }>,
+): Promise<RemoteBugBulkResponse> {
+  return request<RemoteBugBulkResponse>(config, 'POST', '/cli/push-bugs', { bugs });
 }
 
 /** POST /cli/crs/:crId/applied */

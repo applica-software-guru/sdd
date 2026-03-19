@@ -89,11 +89,18 @@ export interface RemoteState {
   bugs?: Record<string, RemoteEntityState>;
 }
 
+/** Response from delete endpoints */
+export interface RemoteDeleteResponse {
+  deleted: number;
+  paths: string[];
+}
+
 /** Result of a push operation */
 export interface PushResult {
   created: number;
   updated: number;
   pushed: string[];
+  deleted: string[];
 }
 
 /** A conflict detected during pull */
@@ -108,6 +115,7 @@ export interface PullConflict {
 export interface PullResult {
   created: string[];
   updated: string[];
+  deleted: string[];
   conflicts: PullConflict[];
 }
 
@@ -115,6 +123,7 @@ export interface PullResult {
 export interface PullEntitiesResult {
   created: number;
   updated: number;
+  deleted: number;
 }
 
 /** Result of remote status check */

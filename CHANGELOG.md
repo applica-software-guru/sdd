@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.8.0 (2026-03-19)
+
+### Features
+
+- **Bidirectional delete sync**: `sdd push` now detects locally deleted files (docs, CRs, bugs) and propagates deletions to the remote SDD Flow platform. Files tracked in `.sdd/remote-state.json` but missing from disk are automatically deleted on remote.
+- **Remote deletion pull**: `sdd pull` detects files deleted on the remote (present in local state but absent from pull response) and removes them locally. If a file was modified locally but deleted on remote, a conflict is reported instead of silently deleting.
+- **Delete API client**: New `deleteDocs`, `deleteCRs`, and `deleteBugs` functions in the API client, calling the new `POST /cli/delete-docs`, `POST /cli/delete-crs`, and `POST /cli/delete-bugs` endpoints.
+- **Deletion output in CLI**: Both `sdd push` and `sdd pull` now display deleted files in red and include deletion counts in the summary output.
+
+### Types
+
+- `PushResult` now includes a `deleted: string[]` field.
+- `PullResult` now includes a `deleted: string[]` field.
+- `PullEntitiesResult` now includes a `deleted: number` field.
+- New `RemoteDeleteResponse` type for delete endpoint responses.
+
 ## 1.1.0 (2026-03-08)
 
 ### Features

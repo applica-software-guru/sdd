@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { resolve, dirname, posix } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -8,7 +8,7 @@ import { readConfig } from '../config/config-manager.js';
 import { parseAllStoryFiles } from '../parser/story-parser.js';
 import { parseAllCRFiles } from '../parser/cr-parser.js';
 import { parseAllBugFiles } from '../parser/bug-parser.js';
-import { buildApiConfig, pullDocs, pushDocs, pushCRs, pushBugs, fetchPendingCRs, fetchOpenBugs, resetProject } from './api-client.js';
+import { buildApiConfig, pullDocs, pushDocs, pushCRs, pushBugs, deleteDocs, deleteCRs, deleteBugs, fetchPendingCRs, fetchOpenBugs, resetProject } from './api-client.js';
 import { readRemoteState, writeRemoteState } from './state.js';
 import type {
   PushResult,
@@ -240,6 +240,42 @@ export async function pushToRemote(root: string, options?: PushOptions): Promise
     allPushed.push(...bugsToPush.map((bug) => bug.relativePath));
   }
 
+  // ── Detect local deletions (tracked in state but missing from disk) ──
+  const allDeleted: string[] = [];
+
+  const deletedDocPaths = Object.keys(state.documents).filter(
+    (p) => !existsSync(resolve(root, p)),
+  );
+  if (deletedDocPaths.length > 0) {
+    await deleteDocs(api, deletedDocPaths);
+    for (const p of deletedDocPaths) {
+      delete state.documents[p];
+    }
+    allDeleted.push(...deletedDocPaths);
+  }
+
+  const deletedCRPaths = Object.keys(state.changeRequests!).filter(
+    (p) => !existsSync(resolve(root, p)),
+  );
+  if (deletedCRPaths.length > 0) {
+    await deleteCRs(api, deletedCRPaths);
+    for (const p of deletedCRPaths) {
+      delete state.changeRequests![p];
+    }
+    allDeleted.push(...deletedCRPaths);
+  }
+
+  const deletedBugPaths = Object.keys(state.bugs!).filter(
+    (p) => !existsSync(resolve(root, p)),
+  );
+  if (deletedBugPaths.length > 0) {
+    await deleteBugs(api, deletedBugPaths);
+    for (const p of deletedBugPaths) {
+      delete state.bugs![p];
+    }
+    allDeleted.push(...deletedBugPaths);
+  }
+
   // ── Finalize ───────────────────────────────────────────────────────────
   state.lastPush = new Date().toISOString();
   await writeRemoteState(root, state);
@@ -248,6 +284,7 @@ export async function pushToRemote(root: string, options?: PushOptions): Promise
     created: totalCreated,
     updated: totalUpdated,
     pushed: allPushed,
+    deleted: allDeleted,
   };
 }
 
@@ -262,7 +299,35 @@ export async function pullFromRemote(root: string, timeout?: number): Promise<Pu
 
   const created: string[] = [];
   const updated: string[] = [];
+  const deleted: string[] = [];
   const conflicts: PullConflict[] = [];
+
+  // Detect remote deletions: tracked locally but not in remote response
+  const remotePathSet = new Set(remoteDocs.map((d) => d.path));
+  for (const [localPath, tracked] of Object.entries(state.documents)) {
+    if (!remotePathSet.has(localPath)) {
+      // File was deleted on remote — check if locally modified
+      const absPath = resolve(root, localPath);
+      if (existsSync(absPath)) {
+        const localRaw = await readFile(absPath, 'utf-8');
+        const localHash = sha256(localRaw);
+        if (localHash !== tracked.localHash) {
+          // Locally modified but deleted on remote → conflict
+          conflicts.push({
+            path: localPath,
+            localVersion: tracked.remoteVersion.toString(),
+            remoteVersion: 0,
+            reason: 'File modified locally but deleted on remote',
+          });
+        } else {
+          // Not modified locally → safe to delete
+          await unlink(absPath);
+          deleted.push(localPath);
+        }
+      }
+      delete state.documents[localPath];
+    }
+  }
 
   for (const doc of remoteDocs) {
     const localPath = doc.path;
@@ -317,7 +382,7 @@ export async function pullFromRemote(root: string, timeout?: number): Promise<Pu
   state.lastPull = new Date().toISOString();
   await writeRemoteState(root, state);
 
-  return { created, updated, conflicts };
+  return { created, updated, deleted, conflicts };
 }
 
 function updateDocState(
@@ -352,6 +417,24 @@ export async function pullCRsFromRemote(root: string, timeout?: number): Promise
 
   let created = 0;
   let updated = 0;
+  let deletedCount = 0;
+
+  // Detect remote deletions: tracked locally but not in remote response
+  const remoteCRIdSet = new Set(remoteCRs.map((cr) => cr.id));
+  for (const [localPath, tracked] of Object.entries(state.changeRequests!)) {
+    if (!remoteCRIdSet.has(tracked.remoteId)) {
+      const absPath = resolve(root, localPath);
+      if (existsSync(absPath)) {
+        const localRaw = await readFile(absPath, 'utf-8');
+        const localHash = sha256(localRaw);
+        if (localHash === tracked.localHash) {
+          await unlink(absPath);
+          deletedCount++;
+        }
+      }
+      delete state.changeRequests![localPath];
+    }
+  }
 
   for (const cr of remoteCRs) {
     const localPath = cr.path ?? idToPath.get(cr.id) ?? `change-requests/CR-${cr.id.substring(0, 8)}.md`;
@@ -405,7 +488,7 @@ export async function pullCRsFromRemote(root: string, timeout?: number): Promise
   }
 
   await writeRemoteState(root, state);
-  return { created, updated };
+  return { created, updated, deleted: deletedCount };
 }
 
 // ─── Pull Bugs ───────────────────────────────────────────────────────────
@@ -426,6 +509,24 @@ export async function pullBugsFromRemote(root: string, timeout?: number): Promis
 
   let created = 0;
   let updated = 0;
+  let deletedCount = 0;
+
+  // Detect remote deletions: tracked locally but not in remote response
+  const remoteBugIdSet = new Set(remoteBugs.map((b) => b.id));
+  for (const [localPath, tracked] of Object.entries(state.bugs!)) {
+    if (!remoteBugIdSet.has(tracked.remoteId)) {
+      const absPath = resolve(root, localPath);
+      if (existsSync(absPath)) {
+        const localRaw = await readFile(absPath, 'utf-8');
+        const localHash = sha256(localRaw);
+        if (localHash === tracked.localHash) {
+          await unlink(absPath);
+          deletedCount++;
+        }
+      }
+      delete state.bugs![localPath];
+    }
+  }
 
   for (const bug of remoteBugs) {
     const localPath = bug.path ?? idToPath.get(bug.id) ?? `bugs/BUG-${bug.id.substring(0, 8)}.md`;
@@ -479,7 +580,7 @@ export async function pullBugsFromRemote(root: string, timeout?: number): Promis
   }
 
   await writeRemoteState(root, state);
-  return { created, updated };
+  return { created, updated, deleted: deletedCount };
 }
 
 // ─── Reset Remote ────────────────────────────────────────────────────────

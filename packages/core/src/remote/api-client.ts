@@ -7,6 +7,7 @@ import type {
   RemoteCRBulkResponse,
   RemoteBugResponse,
   RemoteBugBulkResponse,
+  RemoteDeleteResponse,
   RemoteResetResult,
 } from './types.js';
 
@@ -202,6 +203,30 @@ export async function pushBugs(
   bugs: Array<{ path: string; title: string; body: string; severity?: string; id?: string }>,
 ): Promise<RemoteBugBulkResponse> {
   return request<RemoteBugBulkResponse>(config, 'POST', '/cli/push-bugs', { bugs });
+}
+
+/** POST /cli/delete-docs */
+export async function deleteDocs(
+  config: ApiClientConfig,
+  paths: string[],
+): Promise<RemoteDeleteResponse> {
+  return request<RemoteDeleteResponse>(config, 'POST', '/cli/delete-docs', { paths });
+}
+
+/** POST /cli/delete-crs */
+export async function deleteCRs(
+  config: ApiClientConfig,
+  paths: string[],
+): Promise<RemoteDeleteResponse> {
+  return request<RemoteDeleteResponse>(config, 'POST', '/cli/delete-crs', { paths });
+}
+
+/** POST /cli/delete-bugs */
+export async function deleteBugs(
+  config: ApiClientConfig,
+  paths: string[],
+): Promise<RemoteDeleteResponse> {
+  return request<RemoteDeleteResponse>(config, 'POST', '/cli/delete-bugs', { paths });
 }
 
 /** POST /cli/crs/:crId/applied */

@@ -37,10 +37,10 @@ export type {
 // Remote sync
 export { generateDraftEnrichmentPrompt } from "./prompt/draft-prompt-generator.js";
 export type { DraftElements } from "./prompt/draft-prompt-generator.js";
-export { resolveApiKey, buildApiConfig, pullDocs, pushDocs, fetchPendingCRs, fetchOpenBugs, markCRAppliedRemote, markBugResolvedRemote, markDocEnriched, markCREnriched, markBugEnriched, DEFAULT_REMOTE_TIMEOUT } from "./remote/api-client.js";
+export { resolveApiKey, buildApiConfig, pullDocs, pushDocs, fetchPendingCRs, fetchOpenBugs, markCRAppliedRemote, markBugResolvedRemote, markDocEnriched, markCREnriched, markBugEnriched, resetProject, DEFAULT_REMOTE_TIMEOUT } from "./remote/api-client.js";
 export type { ApiClientConfig } from "./remote/api-client.js";
 export { readRemoteState, writeRemoteState } from "./remote/state.js";
-export { pushToRemote, pullFromRemote, pullCRsFromRemote, pullBugsFromRemote, getRemoteStatus } from "./remote/sync-engine.js";
+export { pushToRemote, pullFromRemote, pullCRsFromRemote, pullBugsFromRemote, getRemoteStatus, resetRemoteProject } from "./remote/sync-engine.js";
 export type {
   RemoteDocResponse,
   RemoteDocBulkResponse,
@@ -53,4 +53,5 @@ export type {
   PullConflict,
   PullEntitiesResult,
   RemoteStatusResult,
+  RemoteResetResult,
 } from "./remote/types.js";

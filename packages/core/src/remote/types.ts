@@ -125,3 +125,13 @@ export interface RemoteStatusResult {
   localPending: number;
   remoteDocs: number;
 }
+
+/** Result of a remote project reset */
+export interface RemoteResetResult {
+  message: string;
+  deleted_documents: number;
+  deleted_change_requests: number;
+  deleted_bugs: number;
+  deleted_comments: number;
+  deleted_notifications: number;
+}

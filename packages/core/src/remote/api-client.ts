@@ -7,6 +7,7 @@ import type {
   RemoteCRBulkResponse,
   RemoteBugResponse,
   RemoteBugBulkResponse,
+  RemoteResetResult,
 } from './types.js';
 
 /** Default timeout for remote operations (seconds) */
@@ -244,4 +245,12 @@ export async function markBugEnriched(
   body: string,
 ): Promise<RemoteBugResponse> {
   return request<RemoteBugResponse>(config, 'POST', `/cli/bugs/${bugId}/enriched`, { body });
+}
+
+/** POST /cli/reset — Reset all project data on remote */
+export async function resetProject(
+  config: ApiClientConfig,
+  confirmSlug: string,
+): Promise<RemoteResetResult> {
+  return request<RemoteResetResult>(config, 'POST', '/cli/reset', { confirm_slug: confirmSlug });
 }

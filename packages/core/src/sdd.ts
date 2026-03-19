@@ -24,8 +24,9 @@ import {
   pullCRsFromRemote,
   pullBugsFromRemote,
   getRemoteStatus,
+  resetRemoteProject,
 } from "./remote/sync-engine.js";
-import type { PushResult, PullResult, PullEntitiesResult, RemoteStatusResult } from "./remote/types.js";
+import type { PushResult, PullResult, PullEntitiesResult, RemoteStatusResult, RemoteResetResult } from "./remote/types.js";
 
 export class SDD {
   private root: string;
@@ -277,6 +278,11 @@ export class SDD {
   async pullBugs(timeout?: number): Promise<PullEntitiesResult> {
     this.ensureInitialized();
     return pullBugsFromRemote(this.root, timeout);
+  }
+
+  async remoteReset(confirmSlug: string, timeout?: number): Promise<RemoteResetResult> {
+    this.ensureInitialized();
+    return resetRemoteProject(this.root, confirmSlug, timeout);
   }
 
   private ensureInitialized(): void {

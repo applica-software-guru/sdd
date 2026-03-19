@@ -93,4 +93,32 @@ export function registerRemote(program: Command): void {
       }
       console.log('');
     });
+
+  remote
+    .command('reset')
+    .description('Delete all project data from remote (docs, CRs, bugs)')
+    .requiredOption('--confirm <slug>', 'Project slug to confirm the reset')
+    .option('--timeout <seconds>', 'Remote request timeout in seconds (default: 300)', parseInt)
+    .action(async (options: { confirm: string; timeout?: number }) => {
+      const sdd = new SDD({ root: process.cwd() });
+
+      console.log(heading('Reset Remote Project'));
+      console.log(warning('This will permanently delete ALL documents, CRs, and bugs from the remote project.'));
+      console.log('');
+
+      try {
+        const result = await sdd.remoteReset(options.confirm, options.timeout);
+        console.log(success(result.message));
+        console.log(chalk.dim(`  Documents:       ${result.deleted_documents}`));
+        console.log(chalk.dim(`  Change requests: ${result.deleted_change_requests}`));
+        console.log(chalk.dim(`  Bugs:            ${result.deleted_bugs}`));
+        console.log(chalk.dim(`  Comments:        ${result.deleted_comments}`));
+        console.log(chalk.dim(`  Notifications:   ${result.deleted_notifications}`));
+        console.log('');
+        console.log(info('Local remote-state has been cleared.'));
+      } catch (err) {
+        console.log(errorFmt((err as Error).message));
+      }
+      console.log('');
+    });
 }

@@ -8,7 +8,7 @@ import { readConfig } from '../config/config-manager.js';
 import { parseAllStoryFiles } from '../parser/story-parser.js';
 import { parseAllCRFiles } from '../parser/cr-parser.js';
 import { parseAllBugFiles } from '../parser/bug-parser.js';
-import { buildApiConfig, pullDocs, pushDocs, pushCRs, pushBugs, fetchPendingCRs, fetchOpenBugs } from './api-client.js';
+import { buildApiConfig, pullDocs, pushDocs, pushCRs, pushBugs, fetchPendingCRs, fetchOpenBugs, resetProject } from './api-client.js';
 import { readRemoteState, writeRemoteState } from './state.js';
 import type {
   PushResult,
@@ -16,6 +16,7 @@ import type {
   PullConflict,
   PullEntitiesResult,
   RemoteStatusResult,
+  RemoteResetResult,
   RemoteDocResponse,
 } from './types.js';
 
@@ -479,6 +480,20 @@ export async function pullBugsFromRemote(root: string, timeout?: number): Promis
 
   await writeRemoteState(root, state);
   return { created, updated };
+}
+
+// ─── Reset Remote ────────────────────────────────────────────────────────
+
+export async function resetRemoteProject(root: string, confirmSlug: string, timeout?: number): Promise<RemoteResetResult> {
+  const config = await readConfig(root);
+  const api = buildApiConfig(config, timeout);
+
+  const result = await resetProject(api, confirmSlug);
+
+  // Clear local remote state so stale mappings don't linger
+  await writeRemoteState(root, { documents: {} });
+
+  return result;
 }
 
 // ─── Remote Status ───────────────────────────────────────────────────────

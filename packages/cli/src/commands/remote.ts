@@ -115,7 +115,8 @@ export function registerRemote(program: Command): void {
         console.log(chalk.dim(`  Comments:        ${result.deleted_comments}`));
         console.log(chalk.dim(`  Notifications:   ${result.deleted_notifications}`));
         console.log('');
-        console.log(info('Local remote-state has been cleared.'));
+        console.log(info('Local remote-state has been cleared and marked for reseed.'));
+        console.log(info('The next "sdd push" without explicit file paths will repopulate the remote from local files.'));
       } catch (err) {
         console.log(errorFmt((err as Error).message));
       }

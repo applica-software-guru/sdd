@@ -100,12 +100,24 @@ export interface PushOptions {
   timeout?: number;
 }
 
+function isReseedPush(state: RemoteStatusTrackingState, options?: PushOptions): boolean {
+  return state.needsReseed === true && !(options?.paths && options.paths.length > 0);
+}
+
+type RemoteStatusTrackingState = {
+  needsReseed?: boolean;
+  documents: Record<string, { remoteId: string; remoteVersion: number; localHash: string; lastSynced: string }>;
+  changeRequests?: Record<string, { remoteId: string; localHash: string; lastSynced: string }>;
+  bugs?: Record<string, { remoteId: string; localHash: string; lastSynced: string }>;
+};
+
 export async function pushToRemote(root: string, options?: PushOptions): Promise<PushResult> {
   const config = await readConfig(root);
   const api = buildApiConfig(config, options?.timeout);
   const state = await readRemoteState(root);
   if (!state.changeRequests) state.changeRequests = {};
   if (!state.bugs) state.bugs = {};
+  const reseedPush = isReseedPush(state, options);
 
   let totalCreated = 0;
   let totalUpdated = 0;
@@ -115,8 +127,11 @@ export async function pushToRemote(root: string, options?: PushOptions): Promise
   const files = await parseAllStoryFiles(root);
   const toPush = files.filter((f) => {
     if (options?.paths && options.paths.length > 0) return options.paths.includes(f.relativePath);
+    if (reseedPush) return true;
     if (options?.all) return true;
-    return f.frontmatter.status !== 'synced';
+    const tracked = state.documents[normalizePath(f.relativePath)];
+    if (!tracked) return true;
+    return tracked.localHash !== f.hash;
   });
 
   if (toPush.length > 0) {
@@ -129,7 +144,7 @@ export async function pushToRemote(root: string, options?: PushOptions): Promise
     const result = await pushDocs(api, documents);
 
     for (const doc of result.documents) {
-      const localPath = doc.path;
+      const localPath = normalizePath(doc.path);
       const absPath = resolve(root, localPath);
       const rawContent = existsSync(absPath) ? await readFile(absPath, 'utf-8') : '';
       state.documents[localPath] = {
@@ -140,17 +155,6 @@ export async function pushToRemote(root: string, options?: PushOptions): Promise
       };
     }
 
-    // Mark local files as synced (drafts are excluded — they need AI enrichment first)
-    for (const f of toPush) {
-      if (f.frontmatter.status === 'draft') continue;
-      const absPath = resolve(root, f.relativePath);
-      const content = await readFile(absPath, 'utf-8');
-      const updated = content.replace(/^status:\s*(new|changed)/m, 'status: synced');
-      if (updated !== content) {
-        await writeFile(absPath, updated, 'utf-8');
-      }
-    }
-
     totalCreated += result.created;
     totalUpdated += result.updated;
     allPushed.push(...toPush.map((f) => f.relativePath));
@@ -158,10 +162,21 @@ export async function pushToRemote(root: string, options?: PushOptions): Promise
 
   // ── Change Requests ────────────────────────────────────────────────────
   const crFiles = await parseAllCRFiles(root);
+  const crHashes = new Map<string, string>();
+  for (const cr of crFiles) {
+    const absPath = resolve(root, cr.relativePath);
+    const raw = existsSync(absPath) ? await readFile(absPath, 'utf-8') : '';
+    crHashes.set(normalizePath(cr.relativePath), sha256(raw));
+  }
   const crsToPush = crFiles.filter((cr) => {
     if (options?.paths && options.paths.length > 0) return options.paths.includes(cr.relativePath);
+    if (reseedPush) return true;
     if (options?.all) return true;
-    return cr.frontmatter.status !== 'applied';
+    const key = normalizePath(cr.relativePath);
+    const tracked = state.changeRequests![key];
+    const localHash = crHashes.get(key);
+    if (!tracked || !localHash) return true;
+    return tracked.localHash !== localHash;
   });
 
   if (crsToPush.length > 0) {
@@ -200,10 +215,21 @@ export async function pushToRemote(root: string, options?: PushOptions): Promise
 
   // ── Bugs ───────────────────────────────────────────────────────────────
   const bugFiles = await parseAllBugFiles(root);
+  const bugHashes = new Map<string, string>();
+  for (const bug of bugFiles) {
+    const absPath = resolve(root, bug.relativePath);
+    const raw = existsSync(absPath) ? await readFile(absPath, 'utf-8') : '';
+    bugHashes.set(normalizePath(bug.relativePath), sha256(raw));
+  }
   const bugsToPush = bugFiles.filter((bug) => {
     if (options?.paths && options.paths.length > 0) return options.paths.includes(bug.relativePath);
+    if (reseedPush) return true;
     if (options?.all) return true;
-    return bug.frontmatter.status !== 'resolved';
+    const key = normalizePath(bug.relativePath);
+    const tracked = state.bugs![key];
+    const localHash = bugHashes.get(key);
+    if (!tracked || !localHash) return true;
+    return tracked.localHash !== localHash;
   });
 
   if (bugsToPush.length > 0) {
@@ -278,6 +304,9 @@ export async function pushToRemote(root: string, options?: PushOptions): Promise
 
   // ── Finalize ───────────────────────────────────────────────────────────
   state.lastPush = new Date().toISOString();
+  if (reseedPush) {
+    state.needsReseed = false;
+  }
   await writeRemoteState(root, state);
 
   return {
@@ -369,9 +398,7 @@ export async function pullFromRemote(root: string, timeout?: number): Promise<Pu
         });
       } else {
         // Only remote body changed — surgically replace body, preserve frontmatter
-        const newStatus = doc.status === 'draft' ? 'draft' : 'synced';
-        let updatedContent = replaceBody(localRaw, doc.content);
-        updatedContent = updatedContent.replace(/^status:\s*.+/m, `status: ${newStatus}`);
+        const updatedContent = replaceBody(localRaw, doc.content);
         await writeFile(absPath, updatedContent, 'utf-8');
         updated.push(localPath);
         updateDocState(state, doc, localPath, updatedContent);
@@ -461,9 +488,7 @@ export async function pullCRsFromRemote(root: string, timeout?: number): Promise
       }
 
       // Body changed — update body, preserve frontmatter
-      const newStatus = cr.status === 'draft' ? 'draft' : 'pending';
-      let updatedContent = replaceBody(localRaw, cr.body);
-      updatedContent = updatedContent.replace(/^status:\s*.+/m, `status: ${newStatus}`);
+      const updatedContent = replaceBody(localRaw, cr.body);
       await writeFile(absPath, updatedContent, 'utf-8');
       updated++;
 
@@ -553,9 +578,7 @@ export async function pullBugsFromRemote(root: string, timeout?: number): Promis
       }
 
       // Body changed — update body, preserve frontmatter
-      const newStatus = bug.status === 'draft' ? 'draft' : 'open';
-      let updatedContent = replaceBody(localRaw, bug.body);
-      updatedContent = updatedContent.replace(/^status:\s*.+/m, `status: ${newStatus}`);
+      const updatedContent = replaceBody(localRaw, bug.body);
       await writeFile(absPath, updatedContent, 'utf-8');
       updated++;
 
@@ -591,8 +614,13 @@ export async function resetRemoteProject(root: string, confirmSlug: string, time
 
   const result = await resetProject(api, confirmSlug);
 
-  // Clear local remote state so stale mappings don't linger
-  await writeRemoteState(root, { documents: {} });
+  // Clear local remote state and mark the project for a full reseed on the next push.
+  await writeRemoteState(root, {
+    needsReseed: true,
+    documents: {},
+    changeRequests: {},
+    bugs: {},
+  });
 
   return result;
 }
@@ -607,7 +635,14 @@ export async function getRemoteStatus(root: string, timeout?: number): Promise<R
   }
 
   const files = await parseAllStoryFiles(root);
-  const localPending = files.filter((f) => f.frontmatter.status !== 'synced').length;
+  const state = await readRemoteState(root);
+  const localPending = state.needsReseed
+    ? files.length
+    : files.filter((f) => {
+      const tracked = state.documents[normalizePath(f.relativePath)];
+      if (!tracked) return true;
+      return tracked.localHash !== f.hash;
+    }).length;
 
   try {
     const api = buildApiConfig(config, timeout);

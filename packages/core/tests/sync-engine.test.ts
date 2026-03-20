@@ -4,12 +4,17 @@ import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { SDD } from '../src/sdd.js';
 import { readRemoteState } from '../src/remote/state.js';
 import type { RemoteDocResponse, RemoteDocBulkResponse, RemoteCRResponse, RemoteBugResponse } from '../src/remote/types.js';
 
 function git(cmd: string, cwd: string): string {
   return execSync(`git ${cmd}`, { cwd, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+}
+
+function sha256(content: string): string {
+  return createHash('sha256').update(content, 'utf-8').digest('hex');
 }
 
 const VISION_MD = `---
@@ -43,6 +48,67 @@ function makeDocResponse(overrides: Partial<RemoteDocResponse> = {}): RemoteDocR
   };
 }
 
+function makeCRResponse(overrides: Partial<RemoteCRResponse> = {}): RemoteCRResponse {
+  return {
+    id: 'cr-001',
+    project_id: 'proj-001',
+    path: 'change-requests/CR-001.md',
+    title: 'Add auth flow',
+    body: '## Description\n\nAdd JWT authentication.\n',
+    status: 'pending',
+    author_id: 'user-1',
+    assignee_id: null,
+    target_files: null,
+    closed_at: null,
+    created_at: '2026-01-01T00:00:00.000Z',
+    updated_at: '2026-01-01T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
+function makeBugResponse(overrides: Partial<RemoteBugResponse> = {}): RemoteBugResponse {
+  return {
+    id: 'bug-001',
+    project_id: 'proj-001',
+    path: 'bugs/BUG-001.md',
+    title: 'Search returns stale results',
+    body: '## Steps\n\n1. Search for a term\n2. Results are outdated\n',
+    status: 'open',
+    severity: 'major',
+    author_id: 'user-1',
+    assignee_id: null,
+    closed_at: null,
+    created_at: '2026-02-01T00:00:00.000Z',
+    updated_at: '2026-02-01T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
+const APPLIED_CR = `---
+title: "Add auth flow"
+status: applied
+author: "user"
+created-at: "2026-01-01T00:00:00.000Z"
+---
+
+## Description
+
+Add JWT authentication.
+`;
+
+const RESOLVED_BUG = `---
+title: "Search returns stale results"
+status: resolved
+author: "user"
+created-at: "2026-02-01T00:00:00.000Z"
+---
+
+## Steps
+
+1. Search for a term
+2. Results are outdated
+`;
+
 describe('Sync engine - push', () => {
   let tempDir: string;
   let sdd: SDD;
@@ -67,7 +133,7 @@ describe('Sync engine - push', () => {
     await rm(tempDir, { recursive: true });
   });
 
-  it('pushes pending files and marks them synced', async () => {
+  it('pushes pending files and preserves local frontmatter status', async () => {
     await writeFile(join(tempDir, 'product/vision.md'), VISION_MD, 'utf-8');
 
     const pushResponse: RemoteDocBulkResponse = {
@@ -87,9 +153,9 @@ describe('Sync engine - push', () => {
     expect(result.updated).toBe(0);
     expect(result.pushed).toContain('product/vision.md');
 
-    // Local file should now be synced
+    // Push should not mutate markdown frontmatter status
     const content = await readFile(join(tempDir, 'product/vision.md'), 'utf-8');
-    expect(content).toContain('status: synced');
+    expect(content).toContain('status: new');
 
     // Remote state should be updated
     const state = await readRemoteState(tempDir);
@@ -100,6 +166,20 @@ describe('Sync engine - push', () => {
 
   it('skips synced files when no paths specified', async () => {
     await writeFile(join(tempDir, 'product/vision.md'), VISION_SYNCED, 'utf-8');
+
+    const { writeRemoteState } = await import('../src/remote/state.js');
+    await writeRemoteState(tempDir, {
+      documents: {
+        'product/vision.md': {
+          remoteId: 'doc-001',
+          remoteVersion: 1,
+          localHash: sha256(VISION_SYNCED),
+          lastSynced: '2026-01-01T00:00:00.000Z',
+        },
+      },
+      changeRequests: {},
+      bugs: {},
+    });
 
     const result = await sdd.push();
     expect(result.pushed).toHaveLength(0);
@@ -122,6 +202,77 @@ describe('Sync engine - push', () => {
     const result = await sdd.push(['product/vision.md']);
     expect(result.pushed).toContain('product/vision.md');
     expect(result.updated).toBe(1);
+  });
+
+  it('repopulates remote from local files after a remote reset', async () => {
+    await writeFile(join(tempDir, 'product/vision.md'), VISION_SYNCED, 'utf-8');
+    await mkdir(join(tempDir, 'change-requests'), { recursive: true });
+    await writeFile(join(tempDir, 'change-requests/CR-001.md'), APPLIED_CR, 'utf-8');
+    await mkdir(join(tempDir, 'bugs'), { recursive: true });
+    await writeFile(join(tempDir, 'bugs/BUG-001.md'), RESOLVED_BUG, 'utf-8');
+
+    globalThis.fetch = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          message: 'Remote project reset.',
+          deleted_documents: 4,
+          deleted_change_requests: 2,
+          deleted_bugs: 1,
+          deleted_comments: 0,
+          deleted_notifications: 0,
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          created: 1,
+          updated: 0,
+          documents: [makeDocResponse()],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          created: 1,
+          updated: 0,
+          change_requests: [makeCRResponse()],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          created: 1,
+          updated: 0,
+          bugs: [makeBugResponse()],
+        }),
+      });
+
+    await sdd.remoteReset('test-project');
+
+    const resetState = await readRemoteState(tempDir);
+    expect(resetState.needsReseed).toBe(true);
+    expect(resetState.documents).toEqual({});
+    expect(resetState.changeRequests).toEqual({});
+    expect(resetState.bugs).toEqual({});
+
+    const result = await sdd.push();
+
+    expect(result.created).toBe(3);
+    expect(result.updated).toBe(0);
+    expect(result.pushed).toContain('product/vision.md');
+    expect(result.pushed).toContain('change-requests/CR-001.md');
+    expect(result.pushed).toContain('bugs/BUG-001.md');
+
+    const state = await readRemoteState(tempDir);
+    expect(state.needsReseed).toBe(false);
+    expect(state.documents['product/vision.md']?.remoteId).toBe('doc-001');
+    expect(state.changeRequests?.['change-requests/CR-001.md']?.remoteId).toBe('cr-001');
+    expect(state.bugs?.['bugs/BUG-001.md']?.remoteId).toBe('bug-001');
   });
 });
 
@@ -505,9 +656,9 @@ Easypick is a marketplace for on-demand services.
     });
     await sdd.push();
 
-    // Read file after push (status changed to synced)
+    // Read file after push (status is preserved)
     const afterPush = await readFile(join(tempDir, 'product/vision.md'), 'utf-8');
-    expect(afterPush).toContain('status: synced');
+    expect(afterPush).toContain('status: new');
 
     // Pull — server returns same content, higher version
     globalThis.fetch = vi.fn().mockResolvedValue({

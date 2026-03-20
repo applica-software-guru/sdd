@@ -84,6 +84,7 @@ export interface RemoteEntityState {
 export interface RemoteState {
   lastPull?: string;
   lastPush?: string;
+  needsReseed?: boolean;
   documents: Record<string, RemoteDocState>;
   changeRequests?: Record<string, RemoteEntityState>;
   bugs?: Record<string, RemoteEntityState>;

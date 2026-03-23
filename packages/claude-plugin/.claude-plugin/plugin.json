@@ -1,0 +1,14 @@
+{
+  "name": "sdd",
+  "description": "Story Driven Development workflow for Claude Code. Keeps your documentation and code in sync via status tracking and git-diff-based prompts.",
+  "version": "1.8.0",
+  "author": {
+    "name": "applica-software-guru",
+    "email": "bruno.fortunato@applica.guru",
+    "url": "https://github.com/applica-software-guru"
+  },
+  "homepage": "https://github.com/applica-software-guru/sdd/blob/main/docs/claude-code-plugin.md",
+  "repository": "https://github.com/applica-software-guru/sdd",
+  "license": "MIT",
+  "keywords": ["sdd", "story-driven-development", "spec-driven", "documentation", "sync", "workflow", "agentic"]
+}

@@ -132,7 +132,7 @@
         },
         {
           "command": "sdd.markCRApplied",
-          "when": "view == sdd.crExplorer && viewItem == draft"
+          "when": "view == sdd.crExplorer && viewItem == pending"
         },
         {
           "command": "sdd.markBugResolved",

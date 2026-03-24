@@ -42,7 +42,7 @@ export function registerCR(program: Command): void {
     });
 
   cr.command('pending')
-    .description('Show draft change requests for the agent to process')
+    .description('Show pending change requests for the agent to process')
     .action(async () => {
       const sdd = new SDD({ root: process.cwd() });
       const pending = await sdd.pendingChangeRequests();

@@ -20,7 +20,7 @@ describe('Remote state manager', () => {
 
   it('returns empty state when file does not exist', async () => {
     const state = await readRemoteState(tempDir);
-    expect(state).toEqual({ documents: {} });
+    expect(state).toEqual({ documents: {}, changeRequests: {}, bugs: {} });
   });
 
   it('round-trips state correctly', async () => {
@@ -57,7 +57,7 @@ describe('Remote state manager', () => {
     await writeFile(join(tempDir, '.sdd', 'remote-state.json'), 'not valid json', 'utf-8');
 
     const state = await readRemoteState(tempDir);
-    expect(state).toEqual({ documents: {} });
+    expect(state).toEqual({ documents: {}, changeRequests: {}, bugs: {} });
   });
 
   it('updates individual document entries', async () => {

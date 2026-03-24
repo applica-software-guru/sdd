@@ -36,7 +36,7 @@ Add JWT-based authentication to the API.
 | Field | Description |
 |-------|-------------|
 | `title` | What this change request is about |
-| `status` | `draft` (pending) or `applied` (processed) |
+| `status` | `draft` (needs enrichment), `pending` (ready to process), or `applied` (processed) |
 | `author` | Who created the request |
 | `created-at` | When it was created |
 
@@ -44,10 +44,11 @@ Add JWT-based authentication to the API.
 
 ```
 1. Create a CR in change-requests/
-2. sdd cr pending → agent reads pending CRs
-3. Agent updates the documentation files
-4. sdd mark-cr-applied → CR marked as applied
-5. sdd sync → agent implements the code
+2. If CR is `draft`, run sdd mark-drafts-enriched (CR transitions to `pending`)
+3. sdd cr pending → agent reads pending CRs
+4. Agent updates the documentation files
+5. sdd mark-cr-applied → CR marked as applied
+6. sdd sync → agent implements the code
 ```
 
 ### Commands
@@ -56,14 +57,17 @@ Add JWT-based authentication to the API.
 # See all change requests
 sdd cr list
 
-# See only draft CRs (what needs to be processed)
+# See only pending CRs (what needs to be processed)
 sdd cr pending
 
 # Mark CRs as applied after updating docs
 sdd mark-cr-applied change-requests/CR-001.md
 
-# Mark all draft CRs as applied
+# Mark all pending CRs as applied
 sdd mark-cr-applied
+
+# Convert draft CRs to pending after enrichment
+sdd mark-drafts-enriched change-requests/CR-001.md
 ```
 
 ## Naming convention

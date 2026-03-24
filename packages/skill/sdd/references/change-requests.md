@@ -14,6 +14,7 @@ created-at: "2025-01-01T00:00:00.000Z"
 ```
 
 - **status**: `draft` (pending) or `applied` (already processed)
+- **status**: `draft` (needs enrichment), `pending` (ready to process), or `applied` (already processed)
 
 ## CR workflow
 
@@ -25,5 +26,5 @@ created-at: "2025-01-01T00:00:00.000Z"
 ## CR commands
 
 - `sdd cr list` — See all change requests and their status
-- `sdd cr pending` — Show only draft CRs to process
+- `sdd cr pending` — Show only pending CRs to process
 - `sdd mark-cr-applied [files...]` — Mark CRs as applied after updating the docs

@@ -62,7 +62,7 @@ export class CRExplorerProvider implements vscode.TreeDataProvider<CRTreeItem> {
           group.push(cr);
           this.groups.set(cr.frontmatter.status, group);
         }
-        const order = ['draft', 'applied'];
+        const order = ['draft', 'pending', 'applied'];
         return order
           .filter((s) => this.groups.has(s))
           .map((s) => new CRTreeItem(null, s));

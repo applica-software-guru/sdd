@@ -62,7 +62,7 @@ export class BugExplorerProvider implements vscode.TreeDataProvider<BugTreeItem>
           group.push(bug);
           this.groups.set(bug.frontmatter.status, group);
         }
-        const order = ['open', 'resolved'];
+        const order = ['draft', 'open', 'resolved'];
         return order
           .filter((s) => this.groups.has(s))
           .map((s) => new BugTreeItem(null, s));

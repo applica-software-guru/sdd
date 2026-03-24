@@ -41,7 +41,7 @@ The due date should be saved and visible when reopening the task.
 | Field | Description |
 |-------|-------------|
 | `title` | Short description of the bug |
-| `status` | `open` (needs fixing) or `resolved` (already fixed) |
+| `status` | `draft` (needs enrichment), `open` (needs fixing), or `resolved` (already fixed) |
 | `author` | Who reported the bug |
 | `created-at` | When it was reported |
 

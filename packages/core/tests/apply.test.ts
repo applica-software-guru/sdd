@@ -59,40 +59,38 @@ describe('generateApplyPrompt', () => {
   it('generates prompt with only bugs', () => {
     const prompt = generateApplyPrompt([makeBug()], [], [], '/tmp');
     expect(prompt).not.toBeNull();
-    expect(prompt).toContain('# SDD Apply');
-    expect(prompt).toContain('Open Bugs (1)');
+    expect(prompt).toContain('## Open bugs (1)');
     expect(prompt).toContain('Login button broken');
     expect(prompt).toContain('bugs/BUG-001.md');
-    expect(prompt).not.toContain('Pending Change Requests');
-    expect(prompt).not.toContain('Pending Files');
+    expect(prompt).not.toContain('## Pending change requests');
+    expect(prompt).not.toContain('## Pending files');
   });
 
   it('generates prompt with only CRs', () => {
     const prompt = generateApplyPrompt([], [makeCR()], [], '/tmp');
     expect(prompt).not.toBeNull();
-    expect(prompt).toContain('Pending Change Requests (1)');
+    expect(prompt).toContain('## Pending change requests (1)');
     expect(prompt).toContain('Add dark mode');
-    expect(prompt).not.toContain('Open Bugs');
-    expect(prompt).not.toContain('Pending Files');
+    expect(prompt).not.toContain('## Open bugs');
+    expect(prompt).not.toContain('## Pending files');
   });
 
   it('generates prompt with only pending files', () => {
     const prompt = generateApplyPrompt([], [], [makeFile()], '/tmp');
     expect(prompt).not.toBeNull();
-    expect(prompt).toContain('Pending Files (1)');
+    expect(prompt).toContain('## Pending files (1)');
     expect(prompt).toContain('product/features/auth.md');
     expect(prompt).toContain('**new**');
-    expect(prompt).not.toContain('Open Bugs');
-    expect(prompt).not.toContain('Pending Change Requests');
+    expect(prompt).not.toContain('## Open bugs');
+    expect(prompt).not.toContain('## Pending change requests');
   });
 
   it('generates prompt with all three', () => {
     const prompt = generateApplyPrompt([makeBug()], [makeCR()], [makeFile()], '/tmp');
     expect(prompt).not.toBeNull();
-    expect(prompt).toContain('Open Bugs (1)');
-    expect(prompt).toContain('Pending Change Requests (1)');
-    expect(prompt).toContain('Pending Files (1)');
-    expect(prompt).toContain('## Instructions');
+    expect(prompt).toContain('## Open bugs (1)');
+    expect(prompt).toContain('## Pending change requests (1)');
+    expect(prompt).toContain('## Pending files (1)');
   });
 });
 

@@ -25,10 +25,9 @@ describe('generatePrompt', () => {
   it('generates prompt with new files', () => {
     const files = [makeFile()];
     const prompt = generatePrompt(files, '/tmp');
-    expect(prompt).toContain('# SDD Sync Prompt');
+    expect(prompt).toContain('## Pending files (1)');
     expect(prompt).toContain('product/features/auth.md');
     expect(prompt).toContain('**new**');
-    expect(prompt).toContain('Read each file listed above');
   });
 
   it('generates prompt with deleted files', () => {
@@ -38,7 +37,7 @@ describe('generatePrompt', () => {
     const prompt = generatePrompt(files, '/tmp');
     expect(prompt).toContain('**deleted**');
     expect(prompt).toContain('Files to remove');
-    expect(prompt).toContain('remove all related code');
+    expect(prompt).toContain('product/features/auth.md');
   });
 
   it('generates prompt with changed files', () => {
@@ -51,7 +50,6 @@ describe('generatePrompt', () => {
 
   it('generates empty prompt when no pending files', () => {
     const prompt = generatePrompt([]);
-    expect(prompt).toContain('# SDD Sync Prompt');
-    expect(prompt).toContain('Nothing to do');
+    expect(prompt).toBe('Nothing to do — all files are synced.');
   });
 });

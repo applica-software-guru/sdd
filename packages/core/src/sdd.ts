@@ -172,7 +172,7 @@ export class SDD {
     const marked: string[] = [];
 
     for (const bug of all) {
-      if (bug.frontmatter.status === "resolved") continue;
+      if (bug.frontmatter.status !== "open") continue;
       if (paths && paths.length > 0 && !paths.includes(bug.relativePath)) continue;
 
       const absPath = resolve(this.root, bug.relativePath);

@@ -105,7 +105,7 @@ sdd validate
 
 ### `sdd cr list`
 
-List all change requests with their status (draft/applied).
+List all change requests with their status (`draft`, `pending`, `applied`).
 
 ```bash
 sdd cr list
@@ -113,7 +113,7 @@ sdd cr list
 
 ### `sdd cr pending`
 
-Show only draft change requests. Use this to see what needs to be processed.
+Show only pending change requests. Use this to see what is ready to be processed.
 
 ```bash
 sdd cr pending
@@ -127,7 +127,7 @@ Mark change requests as applied after updating the documentation.
 # Mark specific CRs
 sdd mark-cr-applied change-requests/CR-001.md
 
-# Mark all draft CRs
+# Mark all pending CRs
 sdd mark-cr-applied
 ```
 
@@ -197,12 +197,13 @@ sdd apply --agent codex
 ```
 
 The command generates a combined prompt with all open bugs, pending CRs, and pending files, then passes it to the selected agent for execution.
+If draft elements exist, they are included as enrichment tasks in the same prompt.
 
 ## Bugs
 
 ### `sdd bug list`
 
-List all bugs with their status (open/resolved).
+List all bugs with their status (`draft`, `open`, `resolved`).
 
 ```bash
 sdd bug list
@@ -249,6 +250,14 @@ Show remote connection status, pending local files, and remote document count.
 
 ```bash
 sdd remote status
+```
+
+### `sdd remote reset --confirm <slug>`
+
+Delete all project data from the remote (documents, CRs, bugs, comments, notifications).
+
+```bash
+sdd remote reset --confirm my-project-slug
 ```
 
 ### `sdd push [files...] [--all]`

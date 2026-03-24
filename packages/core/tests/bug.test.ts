@@ -36,6 +36,18 @@ created-at: "2025-01-02T00:00:00.000Z"
 The navigation bar is misaligned on mobile devices.
 `;
 
+const BUG_DRAFT = `---
+title: "Incomplete bug draft"
+status: draft
+author: "user"
+created-at: "2025-01-03T00:00:00.000Z"
+---
+
+## Description
+
+Draft bug details to enrich.
+`;
+
 describe('Bug parser', () => {
   it('parses bug frontmatter correctly', () => {
     const result = parseBugFile('bugs/BUG-001.md', BUG_OPEN);
@@ -145,6 +157,16 @@ describe('SDD Bug methods', () => {
 
     const marked = await sdd.markBugResolved();
     expect(marked).toHaveLength(0);
+  });
+
+  it('markBugResolved() skips draft bugs', async () => {
+    await writeFile(join(tempDir, 'bugs/BUG-001.md'), BUG_DRAFT, 'utf-8');
+
+    const marked = await sdd.markBugResolved();
+    expect(marked).toHaveLength(0);
+
+    const content = await readFile(join(tempDir, 'bugs/BUG-001.md'), 'utf-8');
+    expect(content).toContain('status: draft');
   });
 
   it('integration: create bug → open → mark resolved → no longer open', async () => {

@@ -62,7 +62,7 @@ Delete the related code in `code/`, then run `sdd mark-synced <file>` (the doc f
 - `sdd validate` — Check for broken references and issues
 - `sdd mark-synced [files...]` — Mark specific files (or all) as synced
 - `sdd cr list` — List all change requests with their status
-- `sdd cr pending` — Show draft change requests to process
+- `sdd cr pending` — Show pending change requests to process
 - `sdd mark-cr-applied [files...]` — Mark change requests as applied
 - `sdd bug list` — List all bugs with their status
 - `sdd bug open` — Show open bugs to fix

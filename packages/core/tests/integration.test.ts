@@ -93,7 +93,7 @@ describe("SDD integration", () => {
 
     // Sync — prompt should list the new file
     const prompt = await sdd.sync();
-    expect(prompt).toContain("# SDD Sync Prompt");
+    expect(prompt).toContain("## Pending files (1)");
     expect(prompt).toContain("product/vision.md");
     expect(prompt).toContain("**new**");
 

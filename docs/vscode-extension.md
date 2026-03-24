@@ -20,14 +20,15 @@ The extension activates automatically when it detects a `.sdd/config.yaml` file 
 
 ### Sidebar
 
-The SDD icon in the activity bar opens two panels:
+The SDD icon in the activity bar opens three panels:
 
 - **Story Explorer** — all documentation files grouped by status (`new`, `changed`, `deleted`, `synced`). Click a file to open it.
-- **Change Requests** — all CRs grouped by status (`draft`, `applied`). Click to open.
+- **Change Requests** — all CRs grouped by status (`draft`, `pending`, `applied`). Click to open.
+- **Bugs** — all bugs grouped by status (`draft`, `open`, `resolved`). Click to open.
 
 Right-click context menus:
 - On pending story files → "Mark Synced"
-- On draft CRs → "Mark CR Applied"
+- On pending CRs → "Mark CR Applied"
 
 ### Status Bar
 
@@ -73,6 +74,10 @@ All commands available via `Ctrl+Shift+P`:
 | SDD: CR List | Run `sdd cr list` in terminal |
 | SDD: CR Pending | Run `sdd cr pending` in terminal |
 | SDD: Mark CR Applied | Run `sdd mark-cr-applied` in terminal |
+| SDD: Bug List | Run `sdd bug list` in terminal |
+| SDD: Bug Open | Run `sdd bug open` in terminal |
+| SDD: Mark Bug Resolved | Run `sdd mark-bug-resolved` in terminal |
+| SDD: Apply | Run `sdd apply` in terminal |
 
 ## Recommended settings
 

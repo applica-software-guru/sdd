@@ -181,24 +181,6 @@ Upgrade sdd to the latest version. If run from inside an SDD project, also refre
 sdd upgrade
 ```
 
-## Apply
-
-### `sdd apply [--agent <name>]`
-
-Run the full SDD workflow automatically using an external AI agent.
-Combines: bug fixing → CR processing → sync implementation.
-
-```bash
-# Use default agent (from config or "claude")
-sdd apply
-
-# Use a specific agent
-sdd apply --agent codex
-```
-
-The command generates a combined prompt with all open bugs, pending CRs, and pending files, then passes it to the selected agent for execution.
-If draft elements exist, they are included as enrichment tasks in the same prompt.
-
 ## Bugs
 
 ### `sdd bug list`
@@ -294,3 +276,14 @@ Mark draft elements as enriched after AI processing.
 sdd mark-drafts-enriched
 sdd mark-drafts-enriched product/vision.md
 ```
+
+### `sdd drafts`
+
+List all local draft docs, change requests, and bugs, and print a minimal TODO prompt for your coding agent.
+
+```bash
+sdd drafts
+```
+
+The command does not execute any agent. It prints the TODO prompt so you can pass it to your agent manually.
+After reviewing the generated changes, run `sdd mark-drafts-enriched` to move drafts to active states.

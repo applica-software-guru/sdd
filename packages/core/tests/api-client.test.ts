@@ -4,8 +4,8 @@ import {
   buildApiConfig,
   pullDocs,
   pushDocs,
-  fetchPendingCRs,
-  fetchOpenBugs,
+  pullPendingCRs,
+  pullOpenBugs,
   markCRAppliedRemote,
   markBugResolvedRemote,
 } from '../src/remote/api-client.js';
@@ -134,22 +134,22 @@ describe('API client functions', () => {
     );
   });
 
-  it('fetchPendingCRs sends GET to correct endpoint', async () => {
+  it('pullPendingCRs sends GET to correct endpoint', async () => {
     const mock = mockFetch([]);
     globalThis.fetch = mock;
 
-    await fetchPendingCRs(API);
+    await pullPendingCRs(API);
     expect(mock).toHaveBeenCalledWith(
       'http://test.local/api/v1/cli/pending-crs',
       expect.objectContaining({ method: 'GET' }),
     );
   });
 
-  it('fetchOpenBugs sends GET to correct endpoint', async () => {
+  it('pullOpenBugs sends GET to correct endpoint', async () => {
     const mock = mockFetch([]);
     globalThis.fetch = mock;
 
-    await fetchOpenBugs(API);
+    await pullOpenBugs(API);
     expect(mock).toHaveBeenCalledWith(
       'http://test.local/api/v1/cli/open-bugs',
       expect.objectContaining({ method: 'GET' }),

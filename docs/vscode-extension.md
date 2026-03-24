@@ -77,7 +77,6 @@ All commands available via `Ctrl+Shift+P`:
 | SDD: Bug List | Run `sdd bug list` in terminal |
 | SDD: Bug Open | Run `sdd bug open` in terminal |
 | SDD: Mark Bug Resolved | Run `sdd mark-bug-resolved` in terminal |
-| SDD: Apply | Run `sdd apply` in terminal |
 
 ## Recommended settings
 

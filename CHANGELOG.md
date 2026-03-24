@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.8.2 (2026-03-24)
+
+### Removed
+
+- **`sdd apply` command**: Removed entirely from CLI, core, VS Code, tests, docs, and skills. Agent-driven apply workflows are no longer part of the toolchain.
+- **VS Code `sdd.apply` and `sdd.build` commands**: Removed from the extension command palette.
+
+### Added
+
+- **`sdd drafts` command**: Replaces `sdd enrich-drafts`. Lists all draft documents, CRs, and bugs, then prints a minimal TODO prompt for the agent to consume. No agent invocation — designed to be called from within an agent skill.
+- **`sdd-remote` skill**: New agent skill for the remote pull/enrich/push workflow. Wired into `sdd init` and `sdd adapters sync` scaffolding (`.sdd/skill/`, `.claude/skills/`, `.agents/skills/`).
+- **`allowed-tools` in skill frontmatter**: Re-added `allowed-tools: Bash(sdd:*) Read Glob Grep` to all `sdd` and `sdd-remote` SKILL.md files.
+
+### Improved
+
+- **`sdd` skill — push reminder**: Added step 10 and rule 8 to the `sdd` skill: when remote sync is configured, the agent suggests running `sdd push` after a successful local sync + commit.
+- **Draft enrichment prompt simplified**: `generateDraftEnrichmentPrompt()` now produces a minimal TODO list (file paths + titles only). Removed project description, document bodies, and project context section — the agent retrieves context itself.
+
+### Refactored
+
+- **`packages/skill/` as single source of truth**: Skill markdown files in `packages/skill/` are now canonical. A new build script (`packages/core/scripts/generate-templates.mjs`) reads them and generates `templates.generated.ts`. `templates.ts` is now a thin re-export wrapper.
+- **CLI prebuild**: Now copies `packages/skill/` to both `cli/skills/` and `claude-plugin/skills/` in a single prebuild step.
+
+---
+
 ## 1.8.1 (2026-03-24)
 
 ### Features
@@ -43,9 +68,8 @@
 
 - Removed `INSTRUCTIONS.md` and agent pointer files generation. Existing projects should run `sdd init` again or manually create `.claude/skills/sdd/SKILL.md`.
 
-## 1.0.3 (2025-06-08)
+## 1.0.3
 
-- Add `sdd apply` command for applying change requests
 - Bug tracking and resolution workflow
 - Auto-refresh sidebar on external changes (VS Code)
 

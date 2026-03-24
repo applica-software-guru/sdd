@@ -1,6 +1,6 @@
 {
   "name": "@applica-software-guru/sdd",
-  "version": "1.8.1",
+  "version": "1.8.2",
   "description": "CLI for Story Driven Development",
   "author": "Bruno Fortunato <bruno.fortunato@applica.guru>",
   "main": "dist/index.js",
@@ -8,11 +8,11 @@
     "sdd": "./dist/index.js"
   },
   "scripts": {
-    "prebuild": "node -e \"require('fs').cpSync('../skill', 'skills', {recursive: true, force: true})\"",
+    "prebuild": "node -e \"const fs=require('fs'); fs.cpSync('../skill', 'skills', {recursive:true, force:true}); fs.cpSync('../skill', '../claude-plugin/skills', {recursive:true, force:true})\"",
     "build": "tsc"
   },
   "dependencies": {
-    "@applica-software-guru/sdd-core": "^1.8.1",
+    "@applica-software-guru/sdd-core": "^1.8.2",
     "@inquirer/prompts": "^7.0.0",
     "chalk": "^4.1.2",
     "cli-table3": "^0.6.5",

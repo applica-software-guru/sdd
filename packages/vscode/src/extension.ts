@@ -8,8 +8,15 @@ import { registerCommands } from './commands/index.js';
 import { registerOnSaveListener, registerOnCreateListener } from './listeners/on-save.js';
 
 export function activate(context: vscode.ExtensionContext): void {
-  // Set context for when clauses
-  vscode.commands.executeCommand('setContext', 'sdd:projectDetected', true);
+  // Set context for when clauses — only if an SDD project is actually present
+  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri;
+  if (workspaceRoot) {
+    const configUri = vscode.Uri.joinPath(workspaceRoot, '.sdd', 'config.yaml');
+    vscode.workspace.fs.stat(configUri).then(
+      () => vscode.commands.executeCommand('setContext', 'sdd:projectDetected', true),
+      () => vscode.commands.executeCommand('setContext', 'sdd:projectDetected', false),
+    );
+  }
 
   // Story Explorer
   const explorerProvider = new StoryExplorerProvider();

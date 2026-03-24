@@ -13,6 +13,7 @@ created-at: "2025-01-01T00:00:00.000Z"
 ---
 ```
 
+- **status**: `draft` (pending) or `applied` (already processed)
 - **status**: `draft` (needs enrichment), `pending` (ready to process), or `applied` (already processed)
 
 ## CR workflow

@@ -1,9 +1,11 @@
 import { readFile } from 'node:fs/promises';
-import { resolve, relative } from 'node:path';
+import { relative } from 'node:path';
 import { glob } from 'glob';
 import matter from 'gray-matter';
-import type { ChangeRequest, ChangeRequestFrontmatter } from '../types.js';
+import type { ChangeRequest, ChangeRequestFrontmatter, ChangeRequestStatus } from '../types.js';
 import { ParseError } from '../errors.js';
+
+const VALID_CR_STATUSES: Set<string> = new Set(['draft', 'pending', 'applied']);
 
 export async function discoverCRFiles(root: string): Promise<string[]> {
   const pattern = 'change-requests/*.md';
@@ -16,7 +18,7 @@ export function parseCRFile(filePath: string, content: string): { frontmatter: C
     const { data, content: body } = matter(content);
     const frontmatter: ChangeRequestFrontmatter = {
       title: data.title ?? '',
-      status: data.status ?? 'draft',
+      status: (VALID_CR_STATUSES.has(data.status) ? data.status : 'draft') as ChangeRequestStatus,
       author: data.author ?? '',
       'created-at': data['created-at'] ?? '',
     };

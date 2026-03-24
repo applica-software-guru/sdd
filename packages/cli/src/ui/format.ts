@@ -90,3 +90,29 @@ export function error(text: string): string {
 export function info(text: string): string {
   return chalk.dim(`  ${text}`);
 }
+
+export function crStatusLabel(status: string): string {
+  switch (status) {
+    case 'draft':
+      return chalk.magenta('draft');
+    case 'pending':
+      return chalk.yellow('pending');
+    case 'applied':
+      return chalk.green('applied');
+    default:
+      return chalk.gray(status);
+  }
+}
+
+export function bugStatusLabel(status: string): string {
+  switch (status) {
+    case 'draft':
+      return chalk.magenta('draft');
+    case 'open':
+      return chalk.yellow('open');
+    case 'resolved':
+      return chalk.green('resolved');
+    default:
+      return chalk.gray(status);
+  }
+}

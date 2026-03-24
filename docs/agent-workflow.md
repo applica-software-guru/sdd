@@ -102,6 +102,41 @@ Run sdd cr pending and apply the change requests, then sdd sync.
 
 The agent reads the CR, updates the docs, marks the CR as applied, and then syncs the code.
 
+## Step 6: Remote recovery/update (optional)
+
+When you need to align local state with remote updates (including pending CRs/bugs and draft content),
+run this playbook with your agent:
+
+```
+Check remote config, pull remote updates, enrich all drafts, mark drafts enriched, then push pending updates.
+```
+
+The expected command sequence is:
+
+```bash
+# 1) Verify local project and remote connectivity
+test -f .sdd/config.yaml && sdd remote status
+
+# 2) Pull remote documents + CRs + bugs
+sdd pull
+
+# 3) List and enrich all draft docs/CRs/bugs with the configured coding agent
+sdd drafts
+
+# 4) Transition draft states to active states
+sdd mark-drafts-enriched
+
+# 5) Push pending/new/open updates back to remote
+sdd push
+
+# 6) Final verification
+sdd remote status
+```
+
+If pull reports conflicts, resolve them before pushing. Avoid `sdd push --all` unless you explicitly want a full reseed.
+
+For command details and draft lifecycle, see [Remote Sync](remote-sync.md).
+
 ## The full loop
 
 ```

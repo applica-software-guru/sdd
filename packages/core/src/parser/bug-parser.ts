@@ -1,9 +1,11 @@
 import { readFile } from 'node:fs/promises';
-import { resolve, relative } from 'node:path';
+import { relative } from 'node:path';
 import { glob } from 'glob';
 import matter from 'gray-matter';
-import type { Bug, BugFrontmatter } from '../types.js';
+import type { Bug, BugFrontmatter, BugStatus } from '../types.js';
 import { ParseError } from '../errors.js';
+
+const VALID_BUG_STATUSES: Set<string> = new Set(['draft', 'open', 'resolved']);
 
 export async function discoverBugFiles(root: string): Promise<string[]> {
   const pattern = 'bugs/*.md';
@@ -16,7 +18,7 @@ export function parseBugFile(filePath: string, content: string): { frontmatter: 
     const { data, content: body } = matter(content);
     const frontmatter: BugFrontmatter = {
       title: data.title ?? '',
-      status: data.status ?? 'open',
+      status: (VALID_BUG_STATUSES.has(data.status) ? data.status : 'open') as BugStatus,
       author: data.author ?? '',
       'created-at': data['created-at'] ?? '',
     };

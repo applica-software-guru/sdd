@@ -8,7 +8,7 @@ import { readConfig } from '../config/config-manager.js';
 import { parseAllStoryFiles } from '../parser/story-parser.js';
 import { parseAllCRFiles } from '../parser/cr-parser.js';
 import { parseAllBugFiles } from '../parser/bug-parser.js';
-import { buildApiConfig, pullDocs, pushDocs, pushCRs, pushBugs, deleteDocs, deleteCRs, deleteBugs, fetchPendingCRs, fetchOpenBugs, resetProject } from './api-client.js';
+import { buildApiConfig, pullDocs, pushDocs, pushCRs, pushBugs, deleteDocs, deleteCRs, deleteBugs, pullPendingCRs, pullOpenBugs, resetProject } from './api-client.js';
 import { readRemoteState, writeRemoteState } from './state.js';
 import type {
   PushResult,
@@ -194,13 +194,13 @@ export async function pushToRemote(root: string, options?: PushOptions): Promise
     const crResult = await pushCRs(api, crPayload);
 
     for (const cr of crResult.change_requests) {
-      const localPath = crsToPush.find(
-        (f) => f.frontmatter.title === cr.title,
-      )?.relativePath;
+      const localPath = cr.path
+        ?? crsToPush.find((f) => f.frontmatter.title === cr.title)?.relativePath;
       if (localPath) {
-        const absPath = resolve(root, localPath);
+        const normalized = normalizePath(localPath);
+        const absPath = resolve(root, normalized);
         const rawContent = existsSync(absPath) ? await readFile(absPath, 'utf-8') : '';
-        state.changeRequests![normalizePath(localPath)] = {
+        state.changeRequests![normalized] = {
           remoteId: cr.id,
           localHash: sha256(rawContent),
           lastSynced: new Date().toISOString(),
@@ -247,13 +247,13 @@ export async function pushToRemote(root: string, options?: PushOptions): Promise
     const bugResult = await pushBugs(api, bugPayload);
 
     for (const bug of bugResult.bugs) {
-      const localPath = bugsToPush.find(
-        (b) => b.frontmatter.title === bug.title,
-      )?.relativePath;
+      const localPath = bug.path
+        ?? bugsToPush.find((b) => b.frontmatter.title === bug.title)?.relativePath;
       if (localPath) {
-        const absPath = resolve(root, localPath);
+        const normalized = normalizePath(localPath);
+        const absPath = resolve(root, normalized);
         const rawContent = existsSync(absPath) ? await readFile(absPath, 'utf-8') : '';
-        state.bugs![normalizePath(localPath)] = {
+        state.bugs![normalized] = {
           remoteId: bug.id,
           localHash: sha256(rawContent),
           lastSynced: new Date().toISOString(),
@@ -432,7 +432,7 @@ export async function pullCRsFromRemote(root: string, timeout?: number): Promise
   const config = await readConfig(root);
   const api = buildApiConfig(config, timeout);
 
-  const remoteCRs = await fetchPendingCRs(api);
+  const remoteCRs = await pullPendingCRs(api);
   const state = await readRemoteState(root);
   if (!state.changeRequests) state.changeRequests = {};
 
@@ -448,7 +448,7 @@ export async function pullCRsFromRemote(root: string, timeout?: number): Promise
 
   // Detect remote deletions: tracked locally but not in remote response
   const remoteCRIdSet = new Set(remoteCRs.map((cr) => cr.id));
-  for (const [localPath, tracked] of Object.entries(state.changeRequests!)) {
+  for (const [localPath, tracked] of Object.entries(state.changeRequests)) {
     if (!remoteCRIdSet.has(tracked.remoteId)) {
       const absPath = resolve(root, localPath);
       if (existsSync(absPath)) {
@@ -522,7 +522,7 @@ export async function pullBugsFromRemote(root: string, timeout?: number): Promis
   const config = await readConfig(root);
   const api = buildApiConfig(config, timeout);
 
-  const remoteBugs = await fetchOpenBugs(api);
+  const remoteBugs = await pullOpenBugs(api);
   const state = await readRemoteState(root);
   if (!state.bugs) state.bugs = {};
 
@@ -538,7 +538,7 @@ export async function pullBugsFromRemote(root: string, timeout?: number): Promis
 
   // Detect remote deletions: tracked locally but not in remote response
   const remoteBugIdSet = new Set(remoteBugs.map((b) => b.id));
-  for (const [localPath, tracked] of Object.entries(state.bugs!)) {
+  for (const [localPath, tracked] of Object.entries(state.bugs)) {
     if (!remoteBugIdSet.has(tracked.remoteId)) {
       const absPath = resolve(root, localPath);
       if (existsSync(absPath)) {

@@ -4,3 +4,4 @@ dist/
 .DS_Store
 packages/cli/skills/
 packages/sdd-ui/.env.local
+test-project/

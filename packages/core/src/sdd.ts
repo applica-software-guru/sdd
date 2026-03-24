@@ -4,7 +4,6 @@ import type { StoryStatus, ValidationResult, SDDConfig, ChangeRequest, Bug } fro
 import { ProjectNotInitializedError } from "./errors.js";
 import { parseAllStoryFiles } from "./parser/story-parser.js";
 import { generatePrompt } from "./prompt/prompt-generator.js";
-import { generateApplyPrompt } from "./prompt/apply-prompt-generator.js";
 import { generateDraftEnrichmentPrompt } from "./prompt/draft-prompt-generator.js";
 import { validate } from "./validate/validator.js";
 import { initProject } from "./scaffold/init.js";
@@ -76,20 +75,6 @@ export class SDD {
   async sync(): Promise<string> {
     const pending = await this.pending();
     return generatePrompt(pending, this.root);
-  }
-
-  async applyPrompt(): Promise<string | null> {
-    this.ensureInitialized();
-    const [bugs, changeRequests, pendingFiles, drafts, allFiles, config] = await Promise.all([
-      this.openBugs(),
-      this.pendingChangeRequests(),
-      this.pending(),
-      this.drafts(),
-      parseAllStoryFiles(this.root),
-      readConfig(this.root),
-    ]);
-    const projectContext = allFiles.filter((f) => f.frontmatter.status !== "draft");
-    return generateApplyPrompt(bugs, changeRequests, pendingFiles, this.root, drafts, projectContext, config.description);
   }
 
   async validate(): Promise<ValidationResult> {
@@ -204,10 +189,7 @@ export class SDD {
   async draftEnrichmentPrompt(): Promise<string | null> {
     this.ensureInitialized();
     const drafts = await this.drafts();
-    const allFiles = await parseAllStoryFiles(this.root);
-    const projectContext = allFiles.filter((f) => f.frontmatter.status !== "draft");
-    const config = await readConfig(this.root);
-    return generateDraftEnrichmentPrompt(drafts, projectContext, config.description);
+    return generateDraftEnrichmentPrompt(drafts);
   }
 
   async markDraftsEnriched(paths?: string[]): Promise<string[]> {

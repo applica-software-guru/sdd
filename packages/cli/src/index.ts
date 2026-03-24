@@ -9,13 +9,13 @@ import { registerValidate } from "./commands/validate.js";
 import { registerMarkSynced } from "./commands/mark-synced.js";
 import { registerCR } from "./commands/cr.js";
 import { registerBug } from "./commands/bug.js";
-import { registerApply } from "./commands/apply.js";
 import { registerAdapters } from "./commands/adapters.js";
 import { registerUI } from "./commands/ui.js";
 import { registerUpgrade } from "./commands/upgrade.js";
 import { registerRemote } from "./commands/remote.js";
 import { registerPull } from "./commands/pull.js";
 import { registerPush } from "./commands/push.js";
+import { registerDrafts } from "./commands/drafts.js";
 import { registerMarkDraftsEnriched } from "./commands/mark-drafts-enriched.js";
 
 const packageRequire = createRequire(__filename);
@@ -36,13 +36,13 @@ registerValidate(program);
 registerMarkSynced(program);
 registerCR(program);
 registerBug(program);
-registerApply(program);
 registerAdapters(program);
 registerUI(program);
 registerUpgrade(program);
 registerRemote(program);
 registerPull(program);
 registerPush(program);
+registerDrafts(program);
 registerMarkDraftsEnriched(program);
 
 program.parseAsync().catch((err) => {

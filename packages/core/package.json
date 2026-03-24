@@ -1,11 +1,12 @@
 {
   "name": "@applica-software-guru/sdd-core",
-  "version": "1.8.1",
+  "version": "1.8.2",
   "description": "Core library for Story Driven Development",
   "author": "Bruno Fortunato <bruno.fortunato@applica.guru>",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
+    "prebuild": "node scripts/generate-templates.mjs",
     "build": "tsc"
   },
   "dependencies": {

@@ -1,6 +1,6 @@
 # Claude Code Plugin
 
-The SDD Claude Code plugin provides two Agent Skills that guide Claude through the full Story Driven Development workflow — directly from your Claude Code session, without any manual setup.
+The SDD Claude Code plugin provides three Agent Skills that guide Claude through the full Story Driven Development workflow — directly from your Claude Code session, without any manual setup.
 
 ## Installation
 
@@ -22,7 +22,7 @@ claude --plugin-dir /path/to/sdd/packages/claude-plugin
 
 ## Skills
 
-Once the plugin is active, two skills are available:
+Once the plugin is active, three skills are available:
 
 ### `/sdd:sdd` — Story Driven Development workflow
 
@@ -47,9 +47,27 @@ Iterative workflow for implementing React components from screenshot specs. The 
 - `sdd` CLI installed
 - Playwright MCP configured in Claude Code settings (e.g. `@playwright/mcp`)
 
+### `/sdd:sdd-remote` — Remote Pull, Enrich, Push
+
+Workflow for syncing local state from remote updates, elaborating draft docs/CRs/bugs,
+and pushing enriched content back to remote.
+
+The skill runs this sequence:
+
+1. Check remote configuration and connection (`sdd remote status`)
+2. Pull docs + CRs + bugs (`sdd pull`)
+3. Generate draft TODO list for enrichment (`sdd drafts`)
+4. Transition enriched drafts to active states (`sdd mark-drafts-enriched`)
+5. Push pending/open/new items back (`sdd push`)
+
+**Automatic activation**: Claude activates this skill when you ask to update local docs from remote changes,
+pull pending CRs/bugs/docs, process drafts, or push pending remote updates.
+
+**Requires**: `sdd` CLI installed and remote configured in `.sdd/config.yaml`
+
 ## How it works
 
-The plugin installs two skill files into Claude Code:
+The plugin installs three skill files into Claude Code:
 
 ```
 skills/
@@ -59,6 +77,8 @@ skills/
 │       ├── file-format.md     # frontmatter and status lifecycle
 │       ├── change-requests.md # CR workflow details
 │       └── bugs.md            # bug workflow details
+├── sdd-remote/
+│   └── SKILL.md               # remote pull/enrich/push workflow
 └── sdd-ui/
     └── SKILL.md               # visual component editor instructions
 ```

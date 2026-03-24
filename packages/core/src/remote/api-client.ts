@@ -180,7 +180,7 @@ export async function pushDocs(
 }
 
 /** GET /cli/pending-crs */
-export async function fetchPendingCRs(config: ApiClientConfig): Promise<RemoteCRResponse[]> {
+export async function pullPendingCRs(config: ApiClientConfig): Promise<RemoteCRResponse[]> {
   return request<RemoteCRResponse[]>(config, 'GET', '/cli/pending-crs');
 }
 
@@ -193,7 +193,7 @@ export async function pushCRs(
 }
 
 /** GET /cli/open-bugs */
-export async function fetchOpenBugs(config: ApiClientConfig): Promise<RemoteBugResponse[]> {
+export async function pullOpenBugs(config: ApiClientConfig): Promise<RemoteBugResponse[]> {
   return request<RemoteBugResponse[]>(config, 'GET', '/cli/open-bugs');
 }
 

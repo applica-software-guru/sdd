@@ -1,20 +1,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { SDD } from '@applica-software-guru/sdd-core';
-import { heading, info } from '../ui/format.js';
-
-function statusLabel(status: string): string {
-  switch (status) {
-    case 'draft':
-      return chalk.magenta('draft');
-    case 'pending':
-      return chalk.yellow('pending');
-    case 'applied':
-      return chalk.green('applied');
-    default:
-      return chalk.gray(status);
-  }
-}
+import { heading, info, crStatusLabel } from '../ui/format.js';
 
 export function registerCR(program: Command): void {
   const cr = program
@@ -36,7 +23,7 @@ export function registerCR(program: Command): void {
 
       for (const cr of crs) {
         const icon = cr.frontmatter.status === 'applied' ? chalk.green('  ✓') : cr.frontmatter.status === 'draft' ? chalk.magenta('  ◇') : chalk.yellow('  ●');
-        console.log(`${icon} ${chalk.white(cr.relativePath)} ${chalk.dim(`[${statusLabel(cr.frontmatter.status)}]`)} ${chalk.cyan(cr.frontmatter.title)}`);
+        console.log(`${icon} ${chalk.white(cr.relativePath)} ${chalk.dim(`[${crStatusLabel(cr.frontmatter.status)}]`)} ${chalk.cyan(cr.frontmatter.title)}`);
       }
       console.log('');
     });

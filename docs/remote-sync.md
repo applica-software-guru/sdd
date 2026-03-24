@@ -115,22 +115,28 @@ sdd mark-drafts-enriched
 sdd mark-drafts-enriched product/vision.md change-requests/CR-abc123.md
 ```
 
+### `sdd drafts`
+
+Generate a minimal draft TODO prompt for all local draft docs, change requests, and bugs.
+
+```bash
+sdd drafts
+```
+
+The command does not run any agent. It prints the TODO list so you can pass it to your agent.
+
 ## Draft enrichment
 
-The `draft` state indicates human-written content that may be incomplete. When `sdd apply` detects draft elements, it includes them in the agent prompt along with full project context, so the AI can produce complete, coherent documentation.
+The `draft` state indicates human-written content that may be incomplete. After pulling drafts, run `sdd drafts` to list them and produce a TODO prompt for your coding agent.
 
 ### Draft enrichment flow
 
 ```
 1. Human creates element with status: draft (locally or via SDD Flow)
 2. sdd pull downloads remote drafts preserving their draft status
-3. sdd apply generates a prompt including:
-   a. Project description
-   b. All existing non-draft documents as context
-   c. Each draft element with its raw content
-4. AI agent enriches the content
-5. sdd mark-drafts-enriched transitions drafts to active state
-6. sdd push uploads enriched content to remote
+3. sdd drafts lists draft elements and prints a TODO prompt for your coding agent
+4. sdd mark-drafts-enriched transitions drafts to active state
+5. sdd push uploads enriched content to remote
 ```
 
 ### Element states
@@ -219,7 +225,7 @@ const bugs = await sdd.pullBugs();
 // Draft enrichment
 const drafts = await sdd.drafts();
 const enrichPrompt = await sdd.draftEnrichmentPrompt();
-const enriched = await sdd.markDraftsEnriched();
+await sdd.markDraftsEnriched();
 ```
 
 ### Lower-level API client

@@ -6,6 +6,7 @@ import {
   CHANGE_REQUESTS_REFERENCE,
   FILE_FORMAT_REFERENCE,
   SKILL_MD_TEMPLATE,
+  SKILL_REMOTE_MD_TEMPLATE,
   SKILL_UI_MD_TEMPLATE,
 } from "./templates.js";
 
@@ -81,21 +82,19 @@ const CANONICAL_SKILLS: Array<{
       },
     ],
   },
+  {
+    id: "sdd-remote",
+    files: [
+      {
+        path: `${CANONICAL_BASE_DIR}/sdd-remote/SKILL.md`,
+        content: SKILL_REMOTE_MD_TEMPLATE,
+      },
+    ],
+  },
 ];
 
 const CANONICAL_FILES: Array<{ path: string; content: string }> =
   CANONICAL_SKILLS.flatMap((skill) => skill.files);
-
-export interface SkillPathsDefinition {
-  skillId: string;
-  paths: string[];
-}
-
-export interface SkillAdapterDefinition {
-  id: string;
-  mode: AdapterMode;
-  skills: SkillPathsDefinition[];
-}
 
 export const SKILL_ADAPTERS: SkillAdapterDefinition[] = [
   {
@@ -115,6 +114,10 @@ export const SKILL_ADAPTERS: SkillAdapterDefinition[] = [
         skillId: "sdd-ui",
         paths: [".claude/skills/sdd-ui/SKILL.md"],
       },
+      {
+        skillId: "sdd-remote",
+        paths: [".claude/skills/sdd-remote/SKILL.md"],
+      },
     ],
   },
   {
@@ -133,6 +136,10 @@ export const SKILL_ADAPTERS: SkillAdapterDefinition[] = [
       {
         skillId: "sdd-ui",
         paths: [".agents/skills/sdd-ui/SKILL.md"],
+      },
+      {
+        skillId: "sdd-remote",
+        paths: [".agents/skills/sdd-remote/SKILL.md"],
       },
     ],
   },

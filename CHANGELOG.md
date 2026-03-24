@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.8.1 (2026-03-24)
+
+### Features
+
+- **Claude Code plugin package**: Added `packages/claude-plugin` with marketplace-ready plugin metadata and bundled Agent Skills (`sdd` and `sdd-ui`).
+- **Claude plugin documentation**: Added dedicated setup and usage guide in `docs/claude-code-plugin.md`.
+
+### Fixes
+
+- **CR status semantics aligned**: Updated CLI, docs, and skills to consistently treat `sdd cr pending` as pending-only (`draft -> pending -> applied`).
+- **Bug resolution guardrail**: `markBugResolved()` now resolves only bugs in `open` state (draft bugs are no longer marked by mistake).
+- **VS Code explorer consistency**: CR explorer now includes `pending` group, bug explorer includes `draft` group, and CR context action targets pending items.
+- **Prompt/remote-state test alignment**: Updated core tests to match current prompt format and remote state schema.
+- **Claude plugin skill references**: Aligned plugin skill wording with current CR/Bug lifecycle semantics.
+
 ## 1.8.0 (2026-03-19)
 
 ### Features

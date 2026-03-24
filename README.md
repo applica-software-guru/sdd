@@ -77,6 +77,7 @@ The key difference from other spec-driven tools is scope and lifecycle: SDD cove
 - [Change Requests](docs/change-requests.md) — structured change management
 - [UX & Screenshots](docs/ux-screenshots.md) — managing mockups and visual assets
 - [VS Code Extension](docs/vscode-extension.md) — sidebar, status bar, auto-frontmatter
+- [Claude Code Plugin](docs/claude-code-plugin.md) — Agent Skills for Claude Code (marketplace)
 - [Remote Sync](docs/remote-sync.md) — connecting to SDD Flow, push/pull, draft enrichment
 - [Homebrew Release Workflow](docs/homebrew-release-workflow.md) — how npm release syncs to Homebrew tap
 
@@ -88,6 +89,7 @@ The key difference from other spec-driven tools is scope and lifecycle: SDD cove
 | `@applica-software-guru/sdd`      | CLI tool                                               |
 | `@applica-software-guru/sdd-ui`   | Split-panel UI editor for visual component development |
 | `sdd-vscode`                      | VS Code extension                                      |
+| `sdd` (Claude Code plugin)        | Agent Skills for Claude Code — `sdd` and `sdd-ui`      |
 
 ## Maintainers
 

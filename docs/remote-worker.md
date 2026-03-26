@@ -13,23 +13,12 @@ The SDD remote worker connects a local machine to an [SDD Flow](https://sdd.appl
 
 - The project must be configured with a remote: run `sdd remote init` first (see [Remote Sync](remote-sync.md)).
 - The machine must have the coding agent installed (e.g. `claude`, `codex`, `opencode`).
-- Git must be clean enough to checkout the working branch.
 
-## Working branch
+## Branch
 
-Each SDD project has a **single working branch** where all SDD writes happen. It is configured in `.sdd/config.yaml`:
+The worker uses whatever git branch is active when it starts — no checkout is performed. The current branch is sent to SDD Flow at registration and shown in the web UI (informational only).
 
-```yaml
-branch: sdd
-```
-
-`sdd init` prompts you for this value (default: `sdd`), then immediately creates and checkouts that branch. You can also edit the config file directly.
-
-**Why a single branch?** The worker needs a fixed, known branch to checkout before running a job — otherwise SDD Flow would have no way to tell the worker where to land. More broadly, this keeps all SDD-driven changes in one place: `sdd push/pull` can sync with the remote without getting confused by writes from multiple branches, and your git history stays clean (implementation delta on `sdd`, unrelated work elsewhere).
-
-**All write commands** (`sync`, `push`, `pull`, `mark-synced`, `mark-drafts-enriched`, `mark-cr-applied`, `mark-bug-resolved`) **stop with an error** if the current branch does not match. `sdd status` shows a warning but continues (it is read-only).
-
-When a worker starts, it automatically checkouts the configured branch. Before executing each job it checkouts the branch again to ensure a clean state.
+SDD commands work on any branch; there is no branch restriction.
 
 ## Starting the worker
 
@@ -42,8 +31,6 @@ The worker logs registration info and then starts polling:
 
 ```
 SDD Remote Worker starting
-  Working branch: sdd
-  Checking out branch sdd...
   Registering with SDD Flow...
   Worker ID: abc123
   Polling for jobs...
@@ -125,9 +112,6 @@ Job output streams in real time on the job detail page.
 Relevant fields in `.sdd/config.yaml`:
 
 ```yaml
-# Working branch — all SDD write commands require this branch
-branch: sdd
-
 # Remote connection (set by sdd remote init)
 remote:
   url: "https://sdd.applica.guru/api/v1"
@@ -138,9 +122,6 @@ remote:
 
 **Worker shows as offline in SDD Flow**
 : The worker heartbeats every 30 seconds. If the process is killed without deregistering, it shows offline after ~60 seconds.
-
-**"Wrong branch" error on startup**
-: Run `git checkout <branch>` manually or update `branch:` in `.sdd/config.yaml`.
 
 **Agent not found**
 : Make sure the agent binary is in `$PATH`. For Claude: `which claude`. For Codex: `which codex`.

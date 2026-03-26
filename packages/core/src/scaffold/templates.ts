@@ -24,7 +24,6 @@ ${content}
 
 export interface ProjectInfo {
   description: string;
-  branch?: string;
 }
 
 export const EMPTY_LOCK_TEMPLATE =

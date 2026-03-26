@@ -77,21 +77,6 @@ Delete the related code in \`code/\`, then run \`sdd mark-synced <file>\` (the d
 - \`sdd bug open\` — Show open bugs to fix
 - \`sdd mark-bug-resolved [files...]\` — Mark bugs as resolved
 
-## Working Branch
-
-Every SDD project has a single **working branch** (default: \`sdd\`), configured in \`.sdd/config.yaml\` as \`branch: sdd\`.
-
-- Before running any SDD write command, verify you are on the correct branch:
-  \`\`\`bash
-  git branch --show-current
-  \`\`\`
-- If on the wrong branch, checkout the configured branch:
-  \`\`\`bash
-  git checkout sdd
-  \`\`\`
-- All SDD commands (\`sdd sync\`, \`sdd push\`, \`sdd pull\`, \`sdd mark-synced\`, etc.) enforce this check and will exit with an error if you are on the wrong branch.
-- \`sdd status\` only shows a warning (it is read-only).
-
 ## Rules
 
 1. **Always commit after mark-synced** — run \`git add -A && git commit -m "sdd sync: ..."\` immediately after \`sdd mark-synced\`. Never leave synced files uncommitted.
@@ -102,7 +87,6 @@ Every SDD project has a single **working branch** (default: \`sdd\`), configured
 6. Respect all constraints in \`## Agent Notes\` sections (if present)
 7. Do not edit files inside \`.sdd/\` manually
 8. If remote is configured, suggest \`sdd push\` after successful local sync + commit
-9. **Always be on the configured working branch** (default: \`sdd\`) before running any write command
 
 ## Project structure
 
@@ -264,25 +248,6 @@ and publish the enriched result to remote in active states.
 This skill also applies when a **remote worker job** is dispatched from SDD Flow, as the
 worker runs these same workflows on behalf of the user.
 
-## Working Branch
-
-Every SDD project has a single **working branch** (default: \`sdd\`) configured in \`.sdd/config.yaml\`.
-
-Before running any SDD command, verify you are on the correct branch:
-
-\`\`\`bash
-git branch --show-current
-\`\`\`
-
-If on the wrong branch:
-
-\`\`\`bash
-git checkout sdd   # or whatever branch is configured
-\`\`\`
-
-All SDD write commands enforce this check. When running as a remote worker, the daemon
-automatically checkouts the configured branch at startup and before each job.
-
 ## Detection
 
 This workflow applies when:
@@ -298,9 +263,7 @@ This workflow applies when:
 
 Follow this sequence to enrich a draft Change Request:
 
-1. Verify you are on the working branch (\`git branch --show-current\`)
-
-2. Pull remote updates:
+1. Pull remote updates:
 
 \`\`\`bash
 sdd pull --crs-only
@@ -333,9 +296,7 @@ sdd push
 
 Follow this sequence to enrich a document:
 
-1. Verify you are on the working branch (\`git branch --show-current\`)
-
-2. Pull remote updates:
+1. Pull remote updates:
 
 \`\`\`bash
 sdd pull --docs-only
@@ -356,9 +317,7 @@ If the document was in \`draft\` status, it will transition to \`new\` on the se
 
 Follow this sequence for a full project sync (all pending items):
 
-1. Verify you are on the working branch (\`git branch --show-current\`)
-
-2. Pull the latest specs:
+1. Pull the latest specs:
 
 \`\`\`bash
 sdd pull
@@ -375,8 +334,7 @@ sdd push
 
 ## Rules
 
-1. **Always verify the working branch** before any write operation
-2. Always check remote configuration before pull/push (\`sdd remote status\`)
+1. Always check remote configuration before pull/push (\`sdd remote status\`)
 3. Do not use \`sdd push --all\` unless the user explicitly asks for a full reseed
 4. If pull reports conflicts, do not overwrite local files blindly; report conflicts and ask how to proceed
 5. Do not edit files inside \`.sdd/\` manually

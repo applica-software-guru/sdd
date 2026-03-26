@@ -242,7 +242,7 @@ Start a remote worker daemon. The worker registers this machine with SDD Flow an
 sdd remote worker
 ```
 
-The worker automatically checkouts the working branch configured in `.sdd/config.yaml` (default: `sdd`) at startup and before each job. It runs until you press `Ctrl+C`.
+The worker uses the current git branch at startup (no checkout is performed). It runs until you press `Ctrl+C`.
 
 For full details, see [Remote Worker](remote-worker.md).
 

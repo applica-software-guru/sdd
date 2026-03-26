@@ -3,14 +3,12 @@ import chalk from 'chalk';
 import { SDD } from '@applica-software-guru/sdd-core';
 import { heading, info } from '../ui/format.js';
 import { renderMarkdown } from '../ui/markdown.js';
-import { requireCorrectBranch } from '../ui/branch-guard.js';
 
 export function registerDrafts(program: Command): void {
   program
     .command('drafts')
     .description('List draft docs/CRs/bugs and print a TODO prompt for the agent')
     .action(async () => {
-      await requireCorrectBranch(process.cwd());
       const sdd = new SDD({ root: process.cwd() });
 
       console.log(heading('Drafts'));

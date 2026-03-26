@@ -141,17 +141,14 @@ export function registerRemote(program: Command): void {
         const apiConfig = buildApiConfig(config, options.timeout);
         const agentName = options.agent ?? config.agent ?? 'claude';
 
-        const branchName = config.branch ?? 'sdd';
         console.log(info(`Starting worker "${options.name ?? hostname()}" with agent "${agentName}"...`));
         console.log(info(`Connected to ${apiConfig.baseUrl}`));
-        console.log(info(`Working branch: ${branchName}`));
         console.log('');
 
         await startWorkerDaemon({
           root,
           name: options.name,
           agent: agentName,
-          branch: branchName,
           agents: config.agents,
           apiConfig,
           onLog: (msg: string) => {

@@ -18,7 +18,6 @@ Add a `remote` section to `.sdd/config.yaml`:
 
 ```yaml
 description: "My project"
-branch: sdd      # working branch — all SDD write commands require this branch
 remote:
   url: "https://sdd.applica.guru/api/v1"
   api-key: "your-api-key-here"
@@ -34,22 +33,6 @@ sdd push
 ```
 
 **Priority order:** `SDD_API_KEY` env var > `remote.api-key` in config.yaml
-
-## Working branch
-
-Every SDD project has a single **working branch** (default: `sdd`) where all SDD writes happen.
-
-**Why a single branch?**
-
-- **Remote sync integrity** — `sdd push` and `sdd pull` synchronise your local files with SDD Flow. If writes could come from multiple branches, the remote would receive conflicting versions from the same machine with no way to reconcile them.
-- **Deterministic worker automation** — when SDD Flow dispatches a job to a remote worker, the worker must know exactly which branch to checkout. A fixed branch makes this unambiguous and reproducible.
-- **Clean git history** — all SDD-driven changes land on one branch, so `git diff sdd..main` always shows only implementation delta, never noise from unrelated work.
-
-The branch is configured in `.sdd/config.yaml` as `branch: sdd`. `sdd init` asks for it interactively and immediately creates and checkouts that branch. You can also edit the config file directly.
-
-All write commands (`sync`, `push`, `pull`, `mark-synced`, `mark-drafts-enriched`, `mark-cr-applied`, `mark-bug-resolved`) stop with an error if you are on the wrong branch. `sdd status` only shows a warning (it is read-only).
-
-Remote workers also enforce this branch: they checkout it at startup and before executing each job.
 
 ## Commands
 

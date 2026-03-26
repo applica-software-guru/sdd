@@ -26,13 +26,6 @@ import {
   resetRemoteProject,
 } from "./remote/sync-engine.js";
 import type { PushResult, PullResult, PullEntitiesResult, RemoteStatusResult, RemoteResetResult } from "./remote/types.js";
-import { getCurrentBranch } from "./git/git.js";
-
-export interface BranchCheckResult {
-  ok: boolean;
-  current: string | null;
-  expected: string;
-}
 
 export class SDD {
   private root: string;
@@ -272,15 +265,6 @@ export class SDD {
   async remoteReset(confirmSlug: string, timeout?: number): Promise<RemoteResetResult> {
     this.ensureInitialized();
     return resetRemoteProject(this.root, confirmSlug, timeout);
-  }
-
-  async ensureBranch(): Promise<BranchCheckResult> {
-    this.ensureInitialized();
-    const config = await readConfig(this.root);
-    const expected = config.branch ?? "sdd";
-    const current = getCurrentBranch(this.root);
-    const ok = current === expected;
-    return { ok, current, expected };
   }
 
   private ensureInitialized(): void {

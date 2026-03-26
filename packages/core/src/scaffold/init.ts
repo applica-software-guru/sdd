@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { type ProjectInfo } from "./templates.js";
 import { syncSkillAdapters } from "./skill-adapters.js";
 import { writeConfig, sddDirPath } from "../config/config-manager.js";
-import { isGitRepo, gitInit, checkoutBranch } from "../git/git.js";
+import { isGitRepo, gitInit } from "../git/git.js";
 import type { SDDConfig } from "../types.js";
 
 export async function initProject(root: string, info?: ProjectInfo): Promise<string[]> {
@@ -23,16 +23,11 @@ export async function initProject(root: string, info?: ProjectInfo): Promise<str
   }
 
   // Write config
-  const branch = info?.branch ?? "sdd";
   const config: SDDConfig = {
     description: info?.description ?? "",
-    branch,
   };
   await writeConfig(root, config);
   createdFiles.push(".sdd/config.yaml");
-
-  // Checkout (or create) working branch
-  checkoutBranch(root, branch);
 
   // Create directory structure
   const dirs = ["product", "product/features", "system", "code", "change-requests", "bugs"];

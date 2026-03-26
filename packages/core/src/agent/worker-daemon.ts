@@ -14,13 +14,12 @@ import {
   workerJobCompleted,
 } from '../remote/worker-client.js';
 import { startAgent } from './agent-runner.js';
-import { checkoutBranch, getCurrentCommit, getJobChangedFiles } from '../git/git.js';
+import { checkoutBranch, getCurrentBranch, getCurrentCommit, getJobChangedFiles } from '../git/git.js';
 
 export interface WorkerDaemonOptions {
   root: string;
   name?: string;
   agent: string;
-  branch?: string;
   agents?: Record<string, string>;
   apiConfig: ApiClientConfig;
   onLog?: (message: string) => void;
@@ -33,22 +32,15 @@ const QA_POLL_INTERVAL_MS = 2_000;
 const WORKER_STATE_FILE = 'worker.json';
 
 export async function startWorkerDaemon(options: WorkerDaemonOptions): Promise<void> {
-  const { root, agent, branch, agents, apiConfig, onLog, renderPrompt } = options;
+  const { root, agent, agents, apiConfig, onLog, renderPrompt } = options;
   const workerName = options.name ?? hostname();
   const sddDir = join(root, '.sdd');
   const stateFile = join(sddDir, WORKER_STATE_FILE);
 
   const log = onLog ?? ((msg: string) => process.stderr.write(`[worker] ${msg}\n`));
 
-  // --- Checkout working branch if configured ---
-  if (branch) {
-    log(`Checking out working branch "${branch}"...`);
-    try {
-      checkoutBranch(root, branch);
-    } catch (err) {
-      log(`Warning: could not checkout branch "${branch}": ${(err as Error).message}`);
-    }
-  }
+  // --- Read current branch (informational — no checkout) ---
+  const branch = getCurrentBranch(root) ?? undefined;
 
   // --- Register ---
   log(`Registering worker "${workerName}" with agent "${agent}"${branch ? ` (branch: ${branch})` : ''}...`);
@@ -128,14 +120,13 @@ export async function startWorkerDaemon(options: WorkerDaemonOptions): Promise<v
     const rendered = renderPrompt ? renderPrompt(job.prompt) : job.prompt;
     log(`─── Prompt ───\n${rendered}\n──────────────`);
 
-    // Checkout working branch before each job
-    const jobBranch = job.branch ?? branch;
-    if (jobBranch) {
-      log(`Checking out branch "${jobBranch}" for job ${job.job_id}...`);
+    // Checkout branch if the job explicitly requests one different from the current
+    if (job.branch && job.branch !== getCurrentBranch(root)) {
+      log(`Checking out branch "${job.branch}" for job ${job.job_id}...`);
       try {
-        checkoutBranch(root, jobBranch);
+        checkoutBranch(root, job.branch);
       } catch (err) {
-        log(`Warning: could not checkout branch "${jobBranch}": ${(err as Error).message}`);
+        log(`Warning: could not checkout branch "${job.branch}": ${(err as Error).message}`);
       }
     }
 

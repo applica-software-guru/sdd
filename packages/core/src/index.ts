@@ -1,5 +1,4 @@
 export { SDD } from "./sdd.js";
-export type { BranchCheckResult } from "./sdd.js";
 export type {
   StoryFrontmatter,
   StoryFile,

@@ -1,7 +1,8 @@
+import { hostname } from 'node:os';
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { input, password } from '@inquirer/prompts';
-import { SDD, readConfig, writeConfig } from '@applica-software-guru/sdd-core';
+import { SDD, readConfig, writeConfig, buildApiConfig, startWorkerDaemon } from '@applica-software-guru/sdd-core';
 import { heading, success, info, warning, error as errorFmt } from '../ui/format.js';
 
 export function registerRemote(program: Command): void {
@@ -121,5 +122,42 @@ export function registerRemote(program: Command): void {
         console.log(errorFmt((err as Error).message));
       }
       console.log('');
+    });
+
+  remote
+    .command('worker')
+    .description('Start a persistent worker that receives and executes jobs from SDD Flow')
+    .option('--name <name>', 'Worker name (default: hostname)')
+    .option('--agent <agent>', 'Agent to use for executing jobs (default: from config or "claude")')
+    .option('--timeout <seconds>', 'Remote request timeout in seconds (default: 300)', parseInt)
+    .action(async (options: { name?: string; agent?: string; timeout?: number }) => {
+      const root = process.cwd();
+      const config = await readConfig(root);
+
+      console.log(heading('SDD Remote Worker'));
+
+      try {
+        const apiConfig = buildApiConfig(config, options.timeout);
+        const agentName = options.agent ?? config.agent ?? 'claude';
+
+        console.log(info(`Starting worker "${options.name ?? hostname()}" with agent "${agentName}"...`));
+        console.log(info(`Connected to ${apiConfig.baseUrl}`));
+        console.log('');
+
+        await startWorkerDaemon({
+          root,
+          name: options.name,
+          agent: agentName,
+          agents: config.agents,
+          apiConfig,
+          onLog: (msg: string) => {
+            const timestamp = new Date().toISOString().slice(11, 19);
+            console.log(`${chalk.dim(timestamp)} ${msg}`);
+          },
+        });
+      } catch (err) {
+        console.log(errorFmt((err as Error).message));
+        process.exit(1);
+      }
     });
 }

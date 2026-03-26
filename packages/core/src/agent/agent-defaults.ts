@@ -1,6 +1,6 @@
 export const DEFAULT_AGENTS: Record<string, string> = {
-  claude: 'claude -p "$(cat $PROMPT_FILE)" --dangerously-skip-permissions --verbose',
-  codex: 'codex -q "$(cat $PROMPT_FILE)"',
+  claude: 'claude -p "$(cat $PROMPT_FILE)" --permission-mode auto --verbose --model $MODEL',
+  codex: 'codex -q "$(cat $PROMPT_FILE)" -m $MODEL',
   opencode: 'opencode -p "$(cat $PROMPT_FILE)"',
 };
 

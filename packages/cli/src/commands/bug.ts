@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { SDD } from '@applica-software-guru/sdd-core';
 import { heading, info, bugStatusLabel } from '../ui/format.js';
+import { requireCorrectBranch } from '../ui/branch-guard.js';
 
 export function registerBug(program: Command): void {
   const bug = program
@@ -55,6 +56,7 @@ export function registerBug(program: Command): void {
     .command('mark-bug-resolved [files...]')
     .description('Mark bugs as resolved')
     .action(async (files: string[]) => {
+      await requireCorrectBranch(process.cwd());
       const sdd = new SDD({ root: process.cwd() });
       const marked = await sdd.markBugResolved(files.length > 0 ? files : undefined);
 

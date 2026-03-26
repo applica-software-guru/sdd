@@ -3,13 +3,14 @@ name: sdd-remote
 description: >
   Remote sync workflow for Story Driven Development. Use when the user asks
   to update local state from remote changes, process remote drafts, and push
-  enriched items back.
+  enriched items back. Also applies when running a remote worker job (enrich
+  or sync).
 license: MIT
 compatibility: Requires sdd CLI (npm i -g @applica-software-guru/sdd)
 allowed-tools: Bash(sdd:*) Read Glob Grep
 metadata:
   author: applica-software-guru
-  version: "1.0"
+  version: "1.1"
 ---
 
 # SDD Remote - Pull, Enrich, Push
@@ -19,6 +20,28 @@ metadata:
 Use this skill to synchronize local SDD docs with remote updates, enrich draft content,
 and publish the enriched result to remote in active states.
 
+This skill also applies when a **remote worker job** is dispatched from SDD Flow, as the
+worker runs these same workflows on behalf of the user.
+
+## Working Branch
+
+Every SDD project has a single **working branch** (default: `sdd`) configured in `.sdd/config.yaml`.
+
+Before running any SDD command, verify you are on the correct branch:
+
+```bash
+git branch --show-current
+```
+
+If on the wrong branch:
+
+```bash
+git checkout sdd   # or whatever branch is configured
+```
+
+All SDD write commands enforce this check. When running as a remote worker, the daemon
+automatically checkouts the configured branch at startup and before each job.
+
 ## Detection
 
 This workflow applies when:
@@ -26,79 +49,98 @@ This workflow applies when:
 - `.sdd/config.yaml` exists in the project root
 - The user asks to update local state from remote, pull pending CRs/bugs/docs,
   enrich drafts, or push pending remote updates
+- A remote worker job prompt instructs you to follow this workflow
 
-## Workflow
+## Workflows
 
-Follow this sequence in order:
+### Enrich Workflow (CR)
 
-1. Verify remote configuration
+Follow this sequence to enrich a draft Change Request:
 
-```bash
-test -f .sdd/config.yaml && sdd remote status
-```
+1. Verify you are on the working branch (`git branch --show-current`)
 
-If remote is not configured or disconnected, run:
-
-```bash
-sdd remote init
-```
-
-Then stop and ask the user for URL/API key if needed.
-
-2. Pull remote updates (docs + CRs + bugs)
+2. Pull remote updates:
 
 ```bash
-sdd pull
-```
-
-Optional scoped pulls:
-
-```bash
-sdd pull --docs-only
 sdd pull --crs-only
-sdd pull --bugs-only
 ```
 
-3. Generate draft TODO list for your coding agent
+3. Generate draft TODO list:
 
 ```bash
 sdd drafts
 ```
 
-This command lists all local draft docs, CRs, and bugs and prints a minimal TODO-style prompt.
-Give that prompt to your coding agent. If additional context is needed, the agent can fetch it directly from project files.
+4. Enrich the draft with technical details, acceptance criteria, edge cases, and
+   any relevant information from the project documentation and comments.
 
-4. Transition enriched drafts to active states
+5. Transition the enriched CR to pending:
 
 ```bash
 sdd mark-drafts-enriched
 ```
 
-This performs:
+This performs: `draft → pending`
 
-- Document: `draft -> new`
-- Change Request: `draft -> pending`
-- Bug: `draft -> open`
-
-5. Push local pending updates to remote
+6. Push the enriched content:
 
 ```bash
 sdd push
 ```
 
-6. Verify final remote sync state
+### Enrich Workflow (Document)
+
+Follow this sequence to enrich a document:
+
+1. Verify you are on the working branch (`git branch --show-current`)
+
+2. Pull remote updates:
 
 ```bash
-sdd remote status
+sdd pull --docs-only
+```
+
+3. Locate the document file in `product/` or `system/` and update its content
+   with the enriched version.
+
+4. Push the enriched content:
+
+```bash
+sdd push
+```
+
+If the document was in `draft` status, it will transition to `new` on the server.
+
+### Sync Workflow (Project-level)
+
+Follow this sequence for a full project sync (all pending items):
+
+1. Verify you are on the working branch (`git branch --show-current`)
+
+2. Pull the latest specs:
+
+```bash
+sdd pull
+```
+
+3. Run the `sdd` skill — it handles the full loop: open bugs, pending CRs,
+   documentation sync, code implementation, mark-synced, and commit.
+
+4. Push:
+
+```bash
+sdd push
 ```
 
 ## Rules
 
-1. Always check remote configuration before pull/push (`sdd remote status`)
-2. Do not use `sdd push --all` unless the user explicitly asks for a full reseed
-3. If pull reports conflicts, do not overwrite local files blindly; report conflicts and ask how to proceed
-4. Do not edit files inside `.sdd/` manually
-5. Keep status transitions explicit: enrich first, then `sdd mark-drafts-enriched`, then push
+1. **Always verify the working branch** before any write operation
+2. Always check remote configuration before pull/push (`sdd remote status`)
+3. Do not use `sdd push --all` unless the user explicitly asks for a full reseed
+4. If pull reports conflicts, do not overwrite local files blindly; report conflicts and ask how to proceed
+5. Do not edit files inside `.sdd/` manually
+6. Keep status transitions explicit: enrich first, then `sdd mark-drafts-enriched`, then push
+7. **Always commit before pushing** when the sync workflow makes code changes
 
 ## Related commands
 
@@ -107,4 +149,6 @@ sdd remote status
 - `sdd pull`
 - `sdd drafts`
 - `sdd mark-drafts-enriched`
+- `sdd sync`
+- `sdd mark-synced`
 - `sdd push`

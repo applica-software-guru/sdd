@@ -57,11 +57,12 @@ export async function registerWorker(
   config: ApiClientConfig,
   name: string,
   agent: string,
+  branch?: string,
   metadata?: Record<string, unknown>,
 ): Promise<WorkerRegistration> {
   return workerRequest<WorkerRegistration>(
     config, 'POST', '/cli/workers/register',
-    { name, agent, metadata },
+    { name, agent, branch, metadata },
   );
 }
 
@@ -131,6 +132,10 @@ export async function workerJobCompleted(
   config: ApiClientConfig,
   jobId: string,
   exitCode: number,
+  changedFiles?: Array<{ path: string; status: 'new' | 'modified' | 'deleted' }>,
 ): Promise<void> {
-  await workerRequest(config, 'POST', `/cli/workers/jobs/${jobId}/completed`, { exit_code: exitCode });
+  await workerRequest(config, 'POST', `/cli/workers/jobs/${jobId}/completed`, {
+    exit_code: exitCode,
+    changed_files: changedFiles ?? [],
+  });
 }

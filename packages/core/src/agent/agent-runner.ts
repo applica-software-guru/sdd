@@ -9,6 +9,7 @@ export interface AgentRunnerOptions {
   root: string;
   prompt: string;
   agent: string;
+  model?: string;
   agents?: Record<string, string>;
   onOutput?: (data: string) => void;
 }
@@ -26,7 +27,7 @@ export interface AgentRunnerHandle {
 }
 
 async function prepareAgent(options: AgentRunnerOptions): Promise<{ command: string; tmpFile: string }> {
-  const { prompt, agent, agents } = options;
+  const { prompt, agent, model, agents } = options;
 
   const template = resolveAgentCommand(agent, agents);
   if (!template) {
@@ -36,7 +37,18 @@ async function prepareAgent(options: AgentRunnerOptions): Promise<{ command: str
   const tmpFile = join(tmpdir(), `sdd-prompt-${randomBytes(6).toString('hex')}.md`);
   await writeFile(tmpFile, prompt, 'utf-8');
 
-  const command = template.replace(/\$PROMPT_FILE/g, tmpFile);
+  let command = template.replace(/\$PROMPT_FILE/g, tmpFile);
+  if (model) {
+    command = command.replace(/\$MODEL/g, model);
+    // If template doesn't have $MODEL but model is specified, inject --model flag
+    if (!template.includes('$MODEL')) {
+      command = command.replace(/^(\S+)/, `$1 --model ${model}`);
+    }
+  } else {
+    // Remove $MODEL placeholder and surrounding flags if not provided
+    command = command.replace(/--model\s+\$MODEL\s*/g, '');
+    command = command.replace(/\$MODEL\s*/g, '');
+  }
   return { command, tmpFile };
 }
 

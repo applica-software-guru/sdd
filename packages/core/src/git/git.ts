@@ -85,6 +85,67 @@ export function getGitModifiedFiles(root: string): Set<string> {
   return modified;
 }
 
+export function getCurrentBranch(root: string): string | null {
+  try {
+    return run('git rev-parse --abbrev-ref HEAD', root) || null;
+  } catch {
+    return null;
+  }
+}
+
+export function checkoutBranch(root: string, branch: string): void {
+  try {
+    run(`git checkout ${branch}`, root);
+  } catch {
+    // branch doesn't exist — create it
+    run(`git checkout -b ${branch}`, root);
+  }
+}
+
+export function getJobChangedFiles(
+  root: string,
+  fromCommit: string | null,
+): Array<{ path: string; status: 'new' | 'modified' | 'deleted' }> {
+  const result = new Map<string, 'new' | 'modified' | 'deleted'>();
+
+  try {
+    // Committed changes since the base commit
+    if (fromCommit) {
+      const committed = run(`git diff --name-status ${fromCommit} HEAD`, root);
+      for (const line of committed.split('\n').filter(Boolean)) {
+        const parts = line.split('\t');
+        const flag = parts[0][0]; // first char (A/M/D/R/C)
+        // Renames have two paths: old\tnew — use the new path
+        const path = parts.length >= 3 ? parts[2] : parts[1];
+        const fileStatus: 'new' | 'modified' | 'deleted' =
+          flag === 'A' ? 'new' : flag === 'D' ? 'deleted' : 'modified';
+        result.set(path, fileStatus);
+      }
+    }
+
+    // Uncommitted working tree changes (staged + unstaged + untracked)
+    const porcelain = run('git status --porcelain', root);
+    for (const line of porcelain.split('\n').filter(Boolean)) {
+      const xy = line.substring(0, 2);
+      const rawPath = line.substring(3).trim();
+      // Renamed files show as "old -> new" in porcelain v1
+      const path = rawPath.includes(' -> ') ? rawPath.split(' -> ')[1] : rawPath;
+
+      if (xy[0] === 'D' || xy[1] === 'D') {
+        result.set(path, 'deleted');
+      } else if (xy === '??' || xy[0] === 'A' || xy[1] === 'A') {
+        if (!result.has(path)) result.set(path, 'new');
+      } else {
+        if (!result.has(path)) result.set(path, 'modified');
+      }
+    }
+  } catch {
+    // not a git repo or no commits — return empty
+  }
+
+  return Array.from(result.entries()).map(([path, status]) => ({ path, status }));
+}
+
 export function getChangedFiles(root: string, fromCommit: string | null): Array<{ path: string; status: 'new' | 'modified' | 'deleted' }> {
   try {
     if (!fromCommit) {

@@ -5,6 +5,7 @@ export interface WorkerRegistration {
   name: string;
   status: string;
   agent: string;
+  branch?: string;
   last_heartbeat_at: string | null;
   registered_at: string;
   is_online: boolean;
@@ -13,10 +14,12 @@ export interface WorkerRegistration {
 /** Job assignment returned by the poll endpoint */
 export interface WorkerJobAssignment {
   job_id: string;
-  entity_type: string;
-  entity_id: string;
+  entity_type: string | null;
+  entity_id: string | null;
   prompt: string;
   agent: string;
+  model?: string;
+  branch?: string;
 }
 
 /** Answer message from the user */

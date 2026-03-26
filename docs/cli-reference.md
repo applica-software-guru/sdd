@@ -234,6 +234,18 @@ Show remote connection status, pending local files, and remote document count.
 sdd remote status
 ```
 
+### `sdd remote worker`
+
+Start a remote worker daemon. The worker registers this machine with SDD Flow and polls for AI jobs dispatched from the web UI.
+
+```bash
+sdd remote worker
+```
+
+The worker automatically checkouts the working branch configured in `.sdd/config.yaml` (default: `sdd`) at startup and before each job. It runs until you press `Ctrl+C`.
+
+For full details, see [Remote Worker](remote-worker.md).
+
 ### `sdd remote reset --confirm <slug>`
 
 Delete all project data from the remote (documents, CRs, bugs, comments, notifications).

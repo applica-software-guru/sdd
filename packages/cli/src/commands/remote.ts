@@ -4,6 +4,7 @@ import chalk from 'chalk';
 import { input, password } from '@inquirer/prompts';
 import { SDD, readConfig, writeConfig, buildApiConfig, startWorkerDaemon } from '@applica-software-guru/sdd-core';
 import { heading, success, info, warning, error as errorFmt } from '../ui/format.js';
+import { renderMarkdown } from '../ui/markdown.js';
 
 export function registerRemote(program: Command): void {
   const remote = program
@@ -140,20 +141,24 @@ export function registerRemote(program: Command): void {
         const apiConfig = buildApiConfig(config, options.timeout);
         const agentName = options.agent ?? config.agent ?? 'claude';
 
+        const branchName = config.branch ?? 'sdd';
         console.log(info(`Starting worker "${options.name ?? hostname()}" with agent "${agentName}"...`));
         console.log(info(`Connected to ${apiConfig.baseUrl}`));
+        console.log(info(`Working branch: ${branchName}`));
         console.log('');
 
         await startWorkerDaemon({
           root,
           name: options.name,
           agent: agentName,
+          branch: branchName,
           agents: config.agents,
           apiConfig,
           onLog: (msg: string) => {
             const timestamp = new Date().toISOString().slice(11, 19);
             console.log(`${chalk.dim(timestamp)} ${msg}`);
           },
+          renderPrompt: renderMarkdown,
         });
       } catch (err) {
         console.log(errorFmt((err as Error).message));

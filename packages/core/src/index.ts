@@ -1,4 +1,5 @@
 export { SDD } from "./sdd.js";
+export type { BranchCheckResult } from "./sdd.js";
 export type {
   StoryFrontmatter,
   StoryFile,
@@ -21,6 +22,7 @@ export type {
 export { SDDError, LockFileNotFoundError, ParseError, ProjectNotInitializedError, RemoteError, RemoteNotConfiguredError, RemoteTimeoutError } from "./errors.js";
 export type { ProjectInfo } from "./scaffold/templates.js";
 export { isSDDProject, readConfig, writeConfig } from "./config/config-manager.js";
+export { getCurrentBranch, checkoutBranch } from "./git/git.js";
 export { runAgent, startAgent } from "./agent/agent-runner.js";
 export type { AgentRunnerOptions, AgentRunnerHandle } from "./agent/agent-runner.js";
 export { startWorkerDaemon } from "./agent/worker-daemon.js";

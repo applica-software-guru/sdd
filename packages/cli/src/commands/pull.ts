@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { SDD } from '@applica-software-guru/sdd-core';
 import { heading, success, warning, info } from '../ui/format.js';
+import { requireCorrectBranch } from '../ui/branch-guard.js';
 
 export function registerPull(program: Command): void {
   program
@@ -12,6 +13,7 @@ export function registerPull(program: Command): void {
     .option('--bugs-only', 'Only pull bugs')
     .option('--timeout <seconds>', 'Remote request timeout in seconds (default: 300)', parseInt)
     .action(async (options: { docsOnly?: boolean; crsOnly?: boolean; bugsOnly?: boolean; timeout?: number }) => {
+      await requireCorrectBranch(process.cwd());
       const sdd = new SDD({ root: process.cwd() });
       const pullAll = !options.docsOnly && !options.crsOnly && !options.bugsOnly;
 

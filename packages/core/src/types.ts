@@ -63,6 +63,7 @@ export interface RemoteConfig {
 
 export interface SDDConfig {
   description: string;
+  branch?: string;
   'last-sync-commit'?: string;
   agent?: string;
   agents?: Record<string, string>;

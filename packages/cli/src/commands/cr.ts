@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { SDD } from '@applica-software-guru/sdd-core';
 import { heading, info, crStatusLabel } from '../ui/format.js';
+import { requireCorrectBranch } from '../ui/branch-guard.js';
 
 export function registerCR(program: Command): void {
   const cr = program
@@ -55,6 +56,7 @@ export function registerCR(program: Command): void {
     .command('mark-cr-applied [files...]')
     .description('Mark change requests as applied')
     .action(async (files: string[]) => {
+      await requireCorrectBranch(process.cwd());
       const sdd = new SDD({ root: process.cwd() });
       const marked = await sdd.markCRApplied(files.length > 0 ? files : undefined);
 

@@ -77,6 +77,12 @@ export function registerInit(program: Command): void {
         return;
       }
 
+      const branch = await input({
+        message: "Working branch name?",
+        default: "sdd",
+        theme: promptTheme,
+      });
+
       const bootstrapMode = await select({
         message: "How do you want to start?",
         choices: [
@@ -100,7 +106,7 @@ export function registerInit(program: Command): void {
       }).start();
 
       const sdd = new SDD({ root: projectDir });
-      const files = await sdd.init({ description: description.trim() });
+      const files = await sdd.init({ description: description.trim(), branch: branch.trim() || "sdd" });
 
       spinner.stop();
 

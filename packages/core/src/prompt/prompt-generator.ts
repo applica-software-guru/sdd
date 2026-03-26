@@ -35,5 +35,13 @@ export function generatePrompt(files: StoryFile[], root?: string): string {
     sections.push(delLines.join('\n'));
   }
 
+  sections.push(
+    '## Report\n\n' +
+    'At the end of your work, provide a detailed report including:\n' +
+    '- List of files created, modified, or deleted\n' +
+    '- Description of actions taken for each file\n' +
+    '- Any issues encountered or decisions made'
+  );
+
   return sections.join('\n\n');
 }

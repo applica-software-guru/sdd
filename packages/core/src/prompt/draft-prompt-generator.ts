@@ -50,5 +50,13 @@ export function generateDraftEnrichmentPrompt(
     sections.push('');
   }
 
+  sections.push(
+    '## Report\n',
+    'At the end of the enrichment, provide a detailed report including:\n' +
+    '- List of enriched files (documents, CRs, bugs)\n' +
+    '- For each file: what was added or completed\n' +
+    '- Any ambiguities resolved or assumptions made'
+  );
+
   return sections.join('\n');
 }

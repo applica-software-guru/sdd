@@ -28,7 +28,10 @@ Your task: generate the initial documentation for this project based on the desc
 - system/tech-stack.md — Technologies and frameworks
 - system/interfaces.md — API contracts
 
-Follow the file format described in .sdd/skill/sdd/references/file-format.md for the YAML frontmatter. Do NOT write any code, only documentation. Commit all created files when done.`;
+Follow the file format described in .sdd/skill/sdd/references/file-format.md for the YAML frontmatter. Set status: new on every file. Do NOT write any code, only documentation.
+
+When done, commit with: git add -A && git commit -m "bootstrap: initial documentation"
+Do NOT run \`sdd mark-synced\` — files must stay status: new so they can be implemented later.`;
   }
 
   return `Read .sdd/skill/sdd/SKILL.md first (fallback: .claude/skills/sdd/SKILL.md). This is a new SDD project.
@@ -45,7 +48,7 @@ Your task: generate the initial documentation for this project. Ask me a few que
 - system/tech-stack.md — Technologies and frameworks
 - system/interfaces.md — API contracts
 
-Follow the file format described in .sdd/skill/sdd/references/file-format.md for the YAML frontmatter. Do NOT write any code, only documentation.`;
+Follow the file format described in .sdd/skill/sdd/references/file-format.md for the YAML frontmatter. Set status: new on every file. Do NOT write any code, only documentation. Do NOT run \`sdd mark-synced\` — files must stay status: new so they can be implemented later.`;
 }
 
 export function registerInit(program: Command): void {
@@ -77,12 +80,6 @@ export function registerInit(program: Command): void {
         return;
       }
 
-      const branch = await input({
-        message: "Working branch name?",
-        default: "sdd",
-        theme: promptTheme,
-      });
-
       const bootstrapMode = await select({
         message: "How do you want to start?",
         choices: [
@@ -106,7 +103,7 @@ export function registerInit(program: Command): void {
       }).start();
 
       const sdd = new SDD({ root: projectDir });
-      const files = await sdd.init({ description: description.trim(), branch: branch.trim() || "sdd" });
+      const files = await sdd.init({ description: description.trim() });
 
       spinner.stop();
 

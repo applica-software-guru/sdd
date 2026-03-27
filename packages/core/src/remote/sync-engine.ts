@@ -139,6 +139,7 @@ export async function pushToRemote(root: string, options?: PushOptions): Promise
       path: normalizePath(f.relativePath),
       title: f.frontmatter.title,
       content: f.body,
+      status: f.frontmatter.status,
     }));
 
     const result = await pushDocs(api, documents);

@@ -1,5 +1,47 @@
 # Changelog
 
+## 1.8.3 (2026-03-27)
+
+### Remote Worker Daemon
+
+Main feature of this release: the `sdd remote worker` command registers the local machine as a remote worker for **SDD Flow** and polls for AI agent jobs dispatched from the web UI.
+
+- **Worker daemon**: registration with periodic heartbeat, concurrent job polling, AI agent execution with output batching and Q&A relay via stdin
+- **Worker client API**: functions for register, heartbeat, poll, output/question/answer relay, and job completion
+- **Interactive agent runner**: new `startAgent()` returning a handle with `writeStdin`/`kill`/`exitPromise` for interactive stdin piping
+- **Compact colored logs**: box-drawing prefix, first-line prompt preview, exit code + changed files count in one line, color-coded log lines (yellow=error, green=done, cyan=job)
+
+### Working Branch Enforcement
+
+- `sdd init` now prompts for a working branch; the worker daemon runs `checkoutBranch()` automatically before each job
+- Worker displays agent/model/branch/prompt on job receive
+
+### Agent Runner Improvements
+
+- **Stream-json output**: `--output-format stream-json` support for Claude Agent — NDJSON event parsing with clean text forwarding to stdout or callback
+- **Dynamic model selection**: `$MODEL` placeholder support in the agent command for runtime model selection
+- **Report section**: added to both sync and enrichment prompts to structure agent output
+
+### Fixes
+
+- **Document status in push payload**: the frontmatter `status` field is now included in the push payload (previously all documents were stored as "synced")
+- **Bootstrap prompt uses skill name**: prompts now reference the skill by name (`sdd`) instead of hardcoded file paths, matching how agents discover and invoke skills
+
+### Documentation
+
+- New `docs/remote-worker.md` guide with worker lifecycle, options, and job types
+- Updated `docs/README.md` with a complete documentation index
+- Added draft lifecycle (draft → pending/open) to `docs/concepts.md`
+- Updated `docs/cli-reference.md` and `docs/remote-sync.md`
+
+### Cleanup
+
+- Removed `branch-guard.ts` and related unused exports
+- Removed "apply" job type from prompts and `sdd-remote` skill
+- Updated `sdd-remote` skill with correct paths and revised sync workflow
+
+---
+
 ## 1.8.2 (2026-03-24)
 
 ### Removed

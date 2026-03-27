@@ -75,10 +75,12 @@ The key difference from other spec-driven tools is scope and lifecycle: SDD cove
 - [Concepts](docs/concepts.md) — how SDD works, status lifecycle, project structure
 - [CLI Reference](docs/cli-reference.md) — all commands and options
 - [Change Requests](docs/change-requests.md) — structured change management
+- [Bugs](docs/bugs.md) — bug tracking for the agent
 - [UX & Screenshots](docs/ux-screenshots.md) — managing mockups and visual assets
 - [VS Code Extension](docs/vscode-extension.md) — sidebar, status bar, auto-frontmatter
 - [Claude Code Plugin](docs/claude-code-plugin.md) — Agent Skills for Claude Code (marketplace)
 - [Remote Sync](docs/remote-sync.md) — connecting to SDD Flow, push/pull, draft enrichment
+- [Remote Workers](docs/remote-worker.md) — run AI jobs from the SDD Flow web UI on a local machine
 - [Homebrew Release Workflow](docs/homebrew-release-workflow.md) — how npm release syncs to Homebrew tap
 
 ## Packages

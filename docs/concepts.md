@@ -13,7 +13,7 @@ The agent reads the Story and implements the code. When requirements change, you
 
 ## Status lifecycle
 
-Every documentation file has a `status` field in its frontmatter:
+### Documentation files (`product/` and `system/`)
 
 ```
 new → synced → changed → synced → ...
@@ -34,6 +34,26 @@ new → synced → changed → synced → ...
 - The VS Code extension automatically sets `synced` → `changed` when you edit and save a file
 - **Committing after every mark-synced is mandatory** — the git history is what SDD uses to detect changes
 
+### Change Requests and Bugs (`change-requests/` and `bugs/`)
+
+Change requests and bugs start as `draft` and follow their own lifecycle:
+
+```
+draft → pending → applied    (Change Request)
+draft → open → resolved      (Bug)
+```
+
+| Status    | Applies to | Meaning                                          |
+| --------- | ---------- | ------------------------------------------------ |
+| `draft`   | CR, Bug    | Needs enrichment before processing               |
+| `pending` | CR         | Enriched and ready to be applied to docs         |
+| `applied` | CR         | Change has been applied to the documentation     |
+| `open`    | Bug        | Confirmed and ready to be fixed                  |
+| `resolved`| Bug        | Fixed in the codebase                            |
+
+- **Draft enrichment**: a `draft` entity has a basic description but lacks technical detail. Use `sdd drafts` to see pending drafts and `sdd mark-drafts-enriched` to transition them once enriched. With a remote worker, click **Enrich on Worker** to let an agent do this automatically.
+- See [Change Requests](change-requests.md) and [Bugs](bugs.md) for complete workflow details.
+
 ## Frontmatter
 
 Every `.md` file in `product/` and `system/` starts with YAML frontmatter:
@@ -48,10 +68,10 @@ version: "1.0"
 ---
 ```
 
-| Field           | Description                                   |
-| --------------- | --------------------------------------------- |
-| `title`         | Human-readable title                          |
-| `status`        | One of: `new`, `changed`, `deleted`, `synced` |
+| Field           | Description                                                              |
+| --------------- | ------------------------------------------------------------------------ |
+| `title`         | Human-readable title                                                     |
+| `status`        | Docs: `new`, `changed`, `deleted`, `synced` — CRs/Bugs: see lifecycles above |
 | `author`        | Who wrote/modified this file                  |
 | `last-modified` | ISO 8601 timestamp of last edit               |
 | `version`       | Patch-bumped on each edit (1.0 → 1.1 → 1.2)   |

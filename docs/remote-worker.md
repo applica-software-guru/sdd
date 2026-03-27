@@ -6,7 +6,7 @@ The SDD remote worker connects a local machine to an [SDD Flow](https://sdd.appl
 
 1. You start `sdd remote worker` on a machine that has the project checked out.
 2. The worker registers itself with SDD Flow and starts polling for jobs.
-3. From the SDD Flow web UI, a team member dispatches a job (Enrich, Apply, or Sync) against a CR, bug, or document.
+3. From the SDD Flow web UI, a team member dispatches a job (Enrich, Build, or Custom) against an entity or at project level.
 4. The worker picks up the job, runs the configured AI agent with the generated prompt, streams output back in real time, and reports completion or failure.
 
 ## Prerequisites
@@ -27,6 +27,14 @@ cd /path/to/project
 sdd remote worker
 ```
 
+Options:
+
+| Flag | Description |
+|------|-------------|
+| `--name <name>` | Worker name (defaults to hostname) |
+| `--agent <agent>` | Agent to use: `claude`, `codex`, `opencode` (defaults to `claude`) |
+| `--timeout <seconds>` | Job timeout in seconds (default: 1800 = 30 minutes) |
+
 The worker logs registration info and then starts polling:
 
 ```
@@ -43,8 +51,8 @@ Stop the worker at any time with `Ctrl+C`.
 | Job type | Scope | What the agent does |
 |----------|-------|---------------------|
 | `enrich` | Single entity (doc / CR / bug) | Enriches a draft spec, transitions it to active status |
-| `apply` | Single entity (CR / bug) | Implements a CR or fixes a bug in the codebase |
-| `sync` | Project-level | `sdd pull` → `sdd sync` → implement all pending → `sdd push` |
+| `build` | Project-level | `sdd pull` → full SDD loop → `sdd push` |
+| `custom` | Project-level | Executes a free-form prompt written by the user |
 
 ### Enrich
 
@@ -56,29 +64,29 @@ Enriches a draft entity. The generated prompt includes the current content plus 
 | Change Request | `draft` | `pending` |
 | Bug | `draft` | `open` |
 
-### Apply
+### Build
 
-Implements an approved change request or fixes a bug. The prompt includes the full spec and all comments. The worker runs the agent and streams output back to SDD Flow.
-
-### Sync
-
-Project-level sync. The agent runs the full cycle:
+Project-level build. The agent runs the full SDD cycle:
 
 ```
-sdd pull → implement all pending specs → sdd push
+sdd pull → fix open bugs → apply pending CRs → sdd sync → implement → commit → sdd push
 ```
 
 No entity is targeted; the entire project is brought up to date.
 
+### Custom
+
+A free-form job where you write the entire prompt. The worker executes it as-is with no server-generated instructions. Useful for one-off tasks, experiments, or anything outside the standard SDD workflow.
+
 ## Agents and models
 
-The worker uses the agent command configured via `.sdd/config.yaml` (or defaults). When SDD Flow dispatches a job, it can specify both the **agent** (Claude, Codex, OpenCode…) and the **model** to use for that specific job.
+The worker uses the agent configured at registration time (`--agent` flag or `.sdd/config.yaml`). When SDD Flow dispatches a job, you can specify the **model** to use for that specific job; the agent binary is fixed to what the worker registered with.
 
 Supported agent command templates — the worker substitutes `$PROMPT_FILE` and `$MODEL` at runtime:
 
 | Agent | Default command |
 |-------|----------------|
-| `claude` | `claude -p "$(cat $PROMPT_FILE)" --dangerously-skip-permissions --verbose --model $MODEL` |
+| `claude` | `claude -p "$(cat $PROMPT_FILE)" --permission-mode auto --verbose --model $MODEL` |
 | `codex` | `codex -q "$(cat $PROMPT_FILE)" -m $MODEL` |
 | `opencode` | `opencode -p "$(cat $PROMPT_FILE)"` |
 
@@ -86,26 +94,34 @@ If no model is specified for a job, the `--model` flag is removed and the agent 
 
 ## Dispatching jobs from the UI
 
-In SDD Flow, any CR, bug, or document with the right status shows a worker action button:
+In SDD Flow, entities and project pages show worker action buttons when at least one worker is online:
 
-- **Enrich on Worker** — visible when the entity is in `draft` status
-- **Apply on Worker** — visible for CRs in `pending` / `approved` status, bugs in `open` status
-- **Sync on Worker** — available on the Workers list and Dashboard
+| Button | Where | Condition |
+|--------|-------|-----------|
+| **Enrich on Worker** (amber) | CR / Bug / Doc detail | entity status is `draft` |
+| **Build on Worker** (purple) | Workers list, Dashboard | always |
+| **Custom Job** (slate) | Workers list | always |
 
-Clicking any of these opens the **Job Options dialog** where you can select:
+Clicking opens the **Job Options dialog** where you select:
 
-- **Worker** — which registered worker to send the job to
-- **Agent** — which AI agent to use (default: the agent the worker registered with)
+- **Worker** — which registered worker to send the job to (auto-selected if only one is online)
 - **Model** — which model to use (optional; leave blank for the agent default)
-- **Prompt** — auto-generated from the spec and comments; you can preview and edit before dispatching
+- **Prompt** — auto-generated from the spec and comments; you can preview and edit before dispatching (Custom jobs: you write the prompt from scratch)
 
-Job output streams in real time on the job detail page.
+Job output streams in real time on the job detail page. You can answer agent questions interactively from the browser.
+
+## Worker lifecycle
+
+- Workers send a heartbeat every **15 seconds**
+- A worker is **offline** after 60 seconds without a heartbeat
+- Running jobs on a worker that has been offline for more than 5 minutes are marked **failed**
+- Web UI shows: online (green), offline (gray), busy (amber)
 
 ## Viewing workers and jobs
 
-**Workers list** (`/workers`) — shows all registered workers with their status (online/offline), working branch, and registered agent.
+**Workers list** (`/workers`) — shows all registered workers with their status, working branch, and agent. Buttons to dispatch Build or Custom jobs.
 
-**Worker Jobs list** (`/worker-jobs`) — shows all dispatched jobs with status (pending/running/completed/failed). Click a job to view the full streamed output.
+**Job detail page** — full streamed output in a terminal view. Live jobs show a Q&A panel for answering agent questions. Completed jobs show files changed.
 
 ## Configuration reference
 
@@ -121,10 +137,13 @@ remote:
 ## Troubleshooting
 
 **Worker shows as offline in SDD Flow**
-: The worker heartbeats every 30 seconds. If the process is killed without deregistering, it shows offline after ~60 seconds.
+: The worker heartbeats every 15 seconds. If the process is killed without deregistering, it shows offline after ~60 seconds.
 
 **Agent not found**
 : Make sure the agent binary is in `$PATH`. For Claude: `which claude`. For Codex: `which codex`.
 
-**Job stuck in "pending"**
+**Job stuck in "queued"**
 : The job is waiting for an online worker. Start a worker on a machine that has the project configured.
+
+**Job times out**
+: Default timeout is 30 minutes. Increase with `--timeout <seconds>` when starting the worker.

@@ -153,7 +153,17 @@ export function registerRemote(program: Command): void {
           apiConfig,
           onLog: (msg: string) => {
             const timestamp = new Date().toISOString().slice(11, 19);
-            console.log(`${chalk.dim(timestamp)} ${msg}`);
+            const isError = /error|warning/i.test(msg);
+            const isJob = msg.startsWith('┌') || msg.startsWith('│') || msg.startsWith('└');
+            const isJobDone = msg.includes('done —');
+            const formatted = isError
+              ? chalk.yellow(msg)
+              : isJobDone
+              ? chalk.green(msg)
+              : isJob
+              ? chalk.cyan(msg)
+              : msg;
+            console.log(`${chalk.dim(timestamp)} ${formatted}`);
           },
           renderPrompt: renderMarkdown,
         });

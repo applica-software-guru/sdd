@@ -38,6 +38,7 @@ export async function startWorkerDaemon(options: WorkerDaemonOptions): Promise<v
   const stateFile = join(sddDir, WORKER_STATE_FILE);
 
   const log = onLog ?? ((msg: string) => process.stderr.write(`[worker] ${msg}\n`));
+  const shortId = (id: string) => id.slice(0, 8);
 
   // --- Read current branch (informational — no checkout) ---
   const branch = getCurrentBranch(root) ?? undefined;
@@ -56,7 +57,7 @@ export async function startWorkerDaemon(options: WorkerDaemonOptions): Promise<v
     registeredAt: registration.registered_at,
   };
   await writeFile(stateFile, JSON.stringify(state, null, 2), 'utf-8');
-  log(`Registered as worker ${registration.id}`);
+  log(`Registered as worker ${shortId(registration.id)}`);
 
   let running = true;
   let currentJobKill: (() => void) | null = null;
@@ -84,7 +85,10 @@ export async function startWorkerDaemon(options: WorkerDaemonOptions): Promise<v
       try {
         await workerHeartbeat(apiConfig, registration.id, currentJobKill ? 'busy' : 'online');
       } catch (err) {
-        log(`Heartbeat error: ${(err as Error).message}`);
+        const msg = (err as Error).message;
+        if (!msg.includes('abort')) {
+          log(`Heartbeat error: ${msg}`);
+        }
       }
       await sleep(HEARTBEAT_INTERVAL_MS);
     }
@@ -113,12 +117,11 @@ export async function startWorkerDaemon(options: WorkerDaemonOptions): Promise<v
   // --- Job execution ---
   const executeJob = async (job: WorkerJobAssignment) => {
     const jobDesc = job.entity_type ? `${job.entity_type}/${job.entity_id}` : 'sync';
-    log(`Received job ${job.job_id} (${jobDesc})`);
-    log(`  Agent:  ${job.agent}`);
-    if (job.model) log(`  Model:  ${job.model}`);
-    if (job.branch) log(`  Branch: ${job.branch}`);
-    const rendered = renderPrompt ? renderPrompt(job.prompt) : job.prompt;
-    log(`─── Prompt ───\n${rendered}\n──────────────`);
+    const jid = shortId(job.job_id);
+    log(`┌─ Job ${jid} (${jobDesc})`);
+    log(`│  Agent: ${job.agent}${job.model ? `  Model: ${job.model}` : ''}${job.branch ? `  Branch: ${job.branch}` : ''}`);
+    const promptPreview = job.prompt.split('\n').find(l => l.trim().length > 0) ?? '';
+    log(`└─ ${promptPreview.length > 80 ? promptPreview.slice(0, 80) + '…' : promptPreview}`);
 
     // Checkout branch if the job explicitly requests one different from the current
     if (job.branch && job.branch !== getCurrentBranch(root)) {
@@ -223,14 +226,12 @@ export async function startWorkerDaemon(options: WorkerDaemonOptions): Promise<v
       running = true; // temporarily re-enable to allow final flush
       await flushOutput();
 
-      log(`Job ${job.job_id} finished with exit code ${exitCode}`);
       const changedFiles = getJobChangedFiles(root, baseCommit);
-      if (changedFiles.length > 0) {
-        log(`Job ${job.job_id} changed ${changedFiles.length} file(s)`);
-      }
+      const filesMsg = changedFiles.length > 0 ? `, ${changedFiles.length} file(s) changed` : '';
+      log(`Job ${jid} done — exit ${exitCode}${filesMsg}`);
       await workerJobCompleted(apiConfig, job.job_id, exitCode, changedFiles);
     } catch (err) {
-      log(`Job execution error: ${(err as Error).message}`);
+      log(`Job ${jid} error: ${(err as Error).message}`);
       try {
         const changedFiles = getJobChangedFiles(root, baseCommit);
         await workerJobCompleted(apiConfig, job.job_id, 1, changedFiles);
@@ -243,7 +244,7 @@ export async function startWorkerDaemon(options: WorkerDaemonOptions): Promise<v
   };
 
   // --- Start concurrent loops ---
-  log(`Worker "${workerName}" is online. Waiting for jobs...`);
+  log(`Worker "${workerName}" is online. Waiting for jobs… (id: ${shortId(registration.id)})`);
   await Promise.all([heartbeatLoop(), pollLoop()]);
   log('Worker stopped.');
 }

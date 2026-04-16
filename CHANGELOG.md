@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.8.4 (2026-04-16)
+
+### Removed
+
+- **Working branch enforcement**: Removed the requirement to be on a specific git branch (`sdd` by default) before running write commands. The branch check (`requireCorrectBranch`) has been removed from all CLI commands: `sdd sync`, `sdd pull`, `sdd push`, `sdd mark-synced`, `sdd mark-cr-applied`, `sdd mark-bug-resolved`, `sdd drafts`, and `sdd mark-drafts-enriched`. SDD now works on any branch without restriction.
+- **Working Branch documentation**: Removed the `## Working Branch` section from all agent skill files (`sdd` and `sdd-remote` SKILL.md) and from generated scaffold templates. Instructions to verify or checkout the `sdd` branch are no longer present anywhere in the toolchain.
+
+### Fixed
+
+- **`sdd cr pending` description**: Corrected a stale description in the sdd-flow agent skill — the command was incorrectly described as "Show **draft** change requests"; it is now "Show **pending** change requests".
+
+---
+
 ## 1.8.2 (2026-03-24)
 
 ### Removed

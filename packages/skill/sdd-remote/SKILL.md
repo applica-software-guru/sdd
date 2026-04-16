@@ -98,10 +98,10 @@ Follow this sequence for a full project sync (all pending items):
 sdd pull
 ```
 
-3. Run the `sdd` skill — it handles the full loop: open bugs, pending CRs,
+2. Run the `sdd` skill — it handles the full loop: open bugs, pending CRs,
    documentation sync, code implementation, mark-synced, and commit.
 
-4. Push:
+3. Push:
 
 ```bash
 sdd push
@@ -110,11 +110,11 @@ sdd push
 ## Rules
 
 1. Always check remote configuration before pull/push (`sdd remote status`)
-3. Do not use `sdd push --all` unless the user explicitly asks for a full reseed
-4. If pull reports conflicts, do not overwrite local files blindly; report conflicts and ask how to proceed
-5. Do not edit files inside `.sdd/` manually
-6. Keep status transitions explicit: enrich first, then `sdd mark-drafts-enriched`, then push
-7. **Always commit before pushing** when the sync workflow makes code changes
+2. Do not use `sdd push --all` unless the user explicitly asks for a full reseed
+3. If pull reports conflicts, do not overwrite local files blindly; report conflicts and ask how to proceed
+4. Do not edit files inside `.sdd/` manually
+5. Keep status transitions explicit: enrich first, then `sdd mark-drafts-enriched`, then push
+6. **Always commit before pushing** when the sync workflow makes code changes
 
 ## Related commands
 

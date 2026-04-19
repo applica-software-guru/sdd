@@ -131,7 +131,9 @@ sdd mark-cr-applied change-requests/CR-001.md
 sdd mark-cr-applied
 ```
 
-## UI Component Editor
+## UI Component Editor (optional — React only)
+
+Requires the optional package `@applica-software-guru/sdd-ui` (`npm install -g @applica-software-guru/sdd-ui`). This is a standalone tool for React projects — not part of the core workflow.
 
 ### `sdd ui launch-editor <component-name>`
 

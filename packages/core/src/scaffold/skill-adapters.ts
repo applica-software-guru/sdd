@@ -7,7 +7,6 @@ import {
   FILE_FORMAT_REFERENCE,
   SKILL_MD_TEMPLATE,
   SKILL_REMOTE_MD_TEMPLATE,
-  SKILL_UI_MD_TEMPLATE,
 } from "./templates.js";
 
 const MANAGED_HEADER =
@@ -74,15 +73,6 @@ const CANONICAL_SKILLS: Array<{
     ],
   },
   {
-    id: "sdd-ui",
-    files: [
-      {
-        path: `${CANONICAL_BASE_DIR}/sdd-ui/SKILL.md`,
-        content: SKILL_UI_MD_TEMPLATE,
-      },
-    ],
-  },
-  {
     id: "sdd-remote",
     files: [
       {
@@ -111,10 +101,6 @@ export const SKILL_ADAPTERS: SkillAdapterDefinition[] = [
         ],
       },
       {
-        skillId: "sdd-ui",
-        paths: [".claude/skills/sdd-ui/SKILL.md"],
-      },
-      {
         skillId: "sdd-remote",
         paths: [".claude/skills/sdd-remote/SKILL.md"],
       },
@@ -132,10 +118,6 @@ export const SKILL_ADAPTERS: SkillAdapterDefinition[] = [
           ".agents/skills/sdd/references/change-requests.md",
           ".agents/skills/sdd/references/bugs.md",
         ],
-      },
-      {
-        skillId: "sdd-ui",
-        paths: [".agents/skills/sdd-ui/SKILL.md"],
       },
       {
         skillId: "sdd-remote",

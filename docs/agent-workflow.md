@@ -173,7 +173,7 @@ For command details and draft lifecycle, see [Remote Sync](remote-sync.md).
 - **Use screenshots.** If you have UX mockups, put them next to the feature doc (see [UX & Screenshots](ux-screenshots.md)). Multimodal agents will use them.
 - **One feature per file.** Keep feature docs focused. It's easier for the agent to implement one thing well than to parse a giant document.
 - **Review the generated docs.** After initial generation, spend time reading and refining before syncing. This is where you add your domain knowledge.
-- **Visual components.** For UI components with a screenshot spec, use `sdd ui launch-editor` for pixel-accurate iteration. See [UX & Screenshots](ux-screenshots.md).
+- **Visual components.** The agent reads screenshots directly from the feature doc when implementing UI. For React projects that want a side-by-side live editor, see the optional [`sdd ui launch-editor`](cli-reference.md#ui-component-editor-optional--react-only) utility.
 
 ## Agent compatibility
 

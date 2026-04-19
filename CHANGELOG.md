@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.9.0 (2026-04-19)
+
+### Removed
+
+- **`sdd-ui` skill**: Removed from the Claude Code plugin, the canonical `packages/skill/` source, and from `sdd init` scaffolding (no longer written to `.claude/skills/` or `.agents/skills/` in new projects). The skill was too narrow in scope (React-only) and too fragile to distribute in the core plugin: it required Playwright MCP and a running Vite dev server just to operate. The core `sdd` skill already handles UI implementation by reading spec screenshots directly. The standalone `@applica-software-guru/sdd-ui` npm package and the `sdd ui launch-editor` CLI command remain available for React projects that want a live side-by-side editor.
+
+### Added
+
+- **Claude plugin slash commands**: `/sdd-status`, `/sdd-sync`, `/sdd-bugs`, `/sdd-crs`, `/sdd-pull`, `/sdd-push`. Explicit, one-shot entry points that complement the auto-triggered skills.
+- **Claude plugin SessionStart hook**: On session start in an SDD project, the plugin runs a lightweight check and surfaces pending doc files, open bugs, and pending CRs. Silent when not in an SDD project or when the `sdd` CLI isn't available.
+
+### Changed
+
+- **`sdd` skill**: Clearer description with more triggering phrases to reduce undertriggering. Deduplicated the commit rule (now explained once, with explicit rationale about why the git-diff machinery depends on it). Bumped to skill version 1.1.
+- **`sdd-remote` skill**: Fixed step numbering in all three workflows (was `1, 3, 4, 5, 6`). Richer description with SDD Flow / pull / push phrases. Bumped to skill version 1.2.
+- **Claude plugin version**: Bumped from 1.8.0 to 1.9.0 to align with the rest of the monorepo (was previously out of sync).
+- **CLI prebuild**: Now cleans `skills/` and `claude-plugin/skills/` before copying from `packages/skill/`, so removed skills don't persist as stale files in committed outputs.
+
+---
+
 ## 1.8.3 (2026-03-27)
 
 ### Remote Worker Daemon

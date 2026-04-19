@@ -4,318 +4,192 @@
 export const SKILL_MD_TEMPLATE = `---
 name: sdd
 description: >
-  Story Driven Development workflow. Use when working in a project
-  with .sdd/config.yaml, or when the user mentions SDD, sdd sync,
-  story driven development, or spec-driven development.
+  Story Driven Development workflow. Use this skill whenever working in a
+  project that has \`.sdd/config.yaml\`, or when the user mentions SDD, sdd sync,
+  story driven development, spec-driven development, change requests, bugs, or
+  asks to implement a feature described in \`product/\` or \`system/\`. Also trigger
+  on phrases like "sync the docs", "mark synced", "apply this CR", "fix this bug"
+  when an SDD project is detected.
 license: MIT
 compatibility: Requires sdd CLI (npm i -g @applica-software-guru/sdd)
 allowed-tools: Bash(sdd:*) Read Glob Grep
 metadata:
   author: applica-software-guru
-  version: "1.0"
+  version: "1.1"
 ---
 
 # SDD — Story Driven Development
+
+## What this is
+
+SDD keeps documentation (\`product/\`, \`system/\`) and code (\`code/\`) in sync.
+Specs change → \`sdd sync\` surfaces what's pending → agent implements → \`sdd mark-synced\` commits the state → repeat.
+
+The engine behind it is git: SDD uses \`git diff\` on the doc files to know what changed since the last sync. That's why committing immediately after every \`mark-synced\` is non-negotiable — skip a commit and the next sync will see phantom changes.
 
 ## Detection
 
 This project uses SDD if \`.sdd/config.yaml\` exists in the project root.
 
-## Workflow
+## The core loop
 
-Follow this loop every time you work on an SDD project:
+Every session on an SDD project starts the same way — clear the backlog from highest priority down, then move new work forward:
 
-1. Run \`sdd bug open\` — check if there are open bugs to fix first
-2. If there are open bugs, fix the code/docs, then run \`sdd mark-bug-resolved\`
-3. Run \`sdd cr pending\` — check if there are change requests to process
-4. If there are pending CRs, apply them to the docs, then run \`sdd mark-cr-applied\`
-5. Run \`sdd sync\` to see what needs to be implemented
-6. Read the documentation files listed in the sync output
-7. Implement what each file describes, writing code inside \`code/\`
-8. After implementing, mark files as synced:
+1. **Bugs first.** Run \`sdd bug open\`. If there are open bugs, fix the code/docs and run \`sdd mark-bug-resolved\`. Bugs block everything else.
 
-\`\`\`
-sdd mark-synced product/features/auth.md
-\`\`\`
+2. **Then Change Requests.** Run \`sdd cr pending\`. If there are pending CRs, apply them to the docs in \`product/\`/\`system/\` (this flips docs to \`new\`/\`changed\`/\`deleted\`), then run \`sdd mark-cr-applied\`. CRs are the intended way to modify specs — never edit docs arbitrarily to reflect user requests; turn them into CRs first if scope justifies it.
 
-Or mark all pending files at once:
+3. **Then sync.** Run \`sdd sync\`. It returns a structured prompt listing every pending file and (for \`changed\` files) the exact git diff of what changed in the spec. Read only what the prompt tells you to read.
 
-\`\`\`
-sdd mark-synced
+4. **Implement.** Write code inside \`code/\` matching what each doc describes. For \`deleted\` files, remove the corresponding code — the doc itself gets deleted automatically on mark-synced.
+
+5. **Mark synced + commit.** This is one atomic step:
+
+\`\`\`bash
+sdd mark-synced                     # or sdd mark-synced <specific files>
+git add -A && git commit -m "sdd sync: <what you implemented>"
 \`\`\`
 
-9. **Commit immediately after mark-synced** — this is mandatory:
+Every mark-synced MUST be followed by a commit in the same turn. No exceptions. See "Why the commit is mandatory" below.
 
-\`\`\`
-git add -A && git commit -m "sdd sync: <brief description of what was implemented>"
-\`\`\`
+6. **Publish (if remote configured).** If \`.sdd/config.yaml\` has a \`remote:\` section and an API key is set, remind the user they can push with \`sdd push\`.
 
-Do NOT skip this step. Every mark-synced must be followed by a git commit.
+## Why the commit is mandatory
 
-10. If remote sync is configured (remote section in \`.sdd/config.yaml\` and API key available), remind the user they can publish updates with:
-
-\`\`\`
-sdd push
-\`\`\`
-
-### Removing a feature
-
-If a documentation file has \`status: deleted\`, it means that feature should be removed.
-Delete the related code in \`code/\`, then run \`sdd mark-synced <file>\` (the doc file will be removed automatically), then commit.
+\`sdd mark-synced\` records a snapshot of the doc files as the new sync baseline. On the next \`sdd sync\`, SDD runs \`git diff\` between HEAD and the working tree for each doc — that's how it detects what changed. If you mark-sync without committing, the diff machinery breaks: either the next sync sees nothing (false "all synced") or it re-surfaces already-implemented changes. The commit is what makes the sync loop durable.
 
 ## Available commands
 
-- \`sdd status\` — See all documentation files and their state (new/changed/deleted/synced)
-- \`sdd diff\` — See what changed since last sync
-- \`sdd sync\` — Get the sync prompt for pending files (includes git diff for changed files)
+- \`sdd status\` — All doc files and their state (new/changed/deleted/synced)
+- \`sdd diff\` — Spec changes since last sync
+- \`sdd sync\` — Structured prompt for pending files (with git diff for \`changed\`)
 - \`sdd validate\` — Check for broken references and issues
-- \`sdd mark-synced [files...]\` — Mark specific files (or all) as synced
-- \`sdd cr list\` — List all change requests with their status
-- \`sdd cr pending\` — Show pending change requests to process
-- \`sdd mark-cr-applied [files...]\` — Mark change requests as applied
-- \`sdd bug list\` — List all bugs with their status
-- \`sdd bug open\` — Show open bugs to fix
-- \`sdd mark-bug-resolved [files...]\` — Mark bugs as resolved
+- \`sdd mark-synced [files...]\` — Mark files (or all) as synced
+- \`sdd cr list\` / \`sdd cr pending\` / \`sdd mark-cr-applied [files...]\`
+- \`sdd bug list\` / \`sdd bug open\` / \`sdd mark-bug-resolved [files...]\`
 
 ## Rules
 
-1. **Always commit after mark-synced** — run \`git add -A && git commit -m "sdd sync: ..."\` immediately after \`sdd mark-synced\`. Never leave synced files uncommitted.
-2. Before running \`sdd sync\`, check for open bugs with \`sdd bug open\` and pending change requests with \`sdd cr pending\`
-3. If there are pending CRs, apply them to the docs first, then mark them with \`sdd mark-cr-applied\`
-4. Only implement what the sync prompt asks for
-5. All generated code goes inside \`code/\`
-6. Respect all constraints in \`## Agent Notes\` sections (if present)
-7. Do not edit files inside \`.sdd/\` manually
-8. If remote is configured, suggest \`sdd push\` after successful local sync + commit
+1. **Always commit after mark-synced, in the same turn.** This is the one rule you cannot break — see rationale above.
+2. Always check bugs + CRs before sync; they take priority over new work.
+3. Only implement what the sync prompt asks for. Don't wander into unrelated code.
+4. All generated code goes inside \`code/\`. Nothing in \`code/\` should exist that isn't described by a doc.
+5. Respect constraints in \`## Agent Notes\` sections of doc files when present.
+6. Never edit files inside \`.sdd/\` manually — it's SDD's internal state.
+7. If remote is configured, suggest \`sdd push\` after a successful local sync + commit.
 
 ## Project structure
 
 - \`product/\` — What to build (vision, users, features)
-- \`system/\` — How to build it (entities, architecture, tech stack, interfaces)
-- \`code/\` — All generated source code goes here
-- \`change-requests/\` — Change requests to the documentation
+- \`system/\` — How to build it (entities, architecture, tech-stack, interfaces)
+- \`code/\` — All generated source code
+- \`change-requests/\` — Proposed modifications to the docs
 - \`bugs/\` — Bug reports
-- \`.sdd/\` — Project config and sync state (do not edit)
+- \`.sdd/\` — Config and sync state (do not edit by hand)
 
 ## References
-
-For detailed information on specific topics, see:
 
 - [File format and status lifecycle](references/file-format.md)
 - [Change Requests workflow](references/change-requests.md)
 - [Bug workflow](references/bugs.md)
 - [Remote pull/enrich/push workflow](../sdd-remote/SKILL.md)
-- [UI Component workflow](../sdd-ui/SKILL.md)
-`;
-
-export const SKILL_UI_MD_TEMPLATE = `---
-name: sdd-ui
-description: >
-  UI Component Editor workflow. Use when the user wants to implement a React component
-  from a screenshot in an SDD project, iterating visually with live preview.
-license: MIT
-compatibility: >
-  Requires sdd CLI (npm i -g @applica-software-guru/sdd).
-  Requires Playwright MCP configured in Claude Code
-  (e.g. @playwright/mcp or @executeautomation/playwright-mcp).
-allowed-tools: Bash(sdd:*) Read Glob Grep Edit Write mcp__playwright__screenshot mcp__playwright__navigate mcp__playwright__click
-metadata:
-  author: applica-software-guru
-  version: "1.1"
----
-
-# SDD UI — Visual Component Editor
-
-## Purpose
-
-Use this workflow when implementing a React component from a screenshot reference in an SDD project.
-The split-panel editor shows the spec screenshot on the left and the live component on the right,
-so you can iterate visually until they match.
-
-## Prerequisites
-
-- \`sdd\` CLI installed globally
-- Playwright MCP configured in Claude Code settings
-  - e.g. \`@playwright/mcp\` or \`@executeautomation/playwright-mcp\`
-  - If not configured, inform the user and stop — visual feedback won't work without it
-
-## Workflow
-
-### Step 1 — Read the spec
-
-Read the SDD feature file to understand what the component should look like and do.
-Look for any screenshot paths referenced in the feature doc.
-
-### Step 2 — Launch the editor
-
-\`\`\`bash
-# Single screenshot — detached (recommended when run by an agent)
-sdd ui launch-editor LoginForm \\
-  --screenshot product/features/auth/login.png \\
-  --detach
-
-# Multiple screenshots (e.g. desktop + mobile)
-sdd ui launch-editor LoginForm \\
-  --screenshot product/features/auth/login-desktop.png \\
-  --screenshot product/features/auth/login-mobile.png \\
-  --detach
-\`\`\`
-
-The command will:
-- Scaffold \`code/components/LoginForm.tsx\` if it doesn't exist
-- Print the exact component file path to edit
-- Start the editor at \`http://localhost:5174\`
-
-With \`--detach\` the process runs in background and the terminal is immediately free.
-Without \`--detach\` it runs in foreground (use Ctrl+C to stop).
-
-With multiple screenshots, the left panel shows a tab per screenshot.
-With a single screenshot, no tab bar is shown.
-
-### Step 3 — Implement the component
-
-Edit the file printed by \`sdd ui launch-editor\` (e.g. \`code/components/LoginForm.tsx\`).
-
-Write a React component that matches the screenshot. Use standard HTML/CSS or inline styles —
-no external UI library unless the project already uses one.
-
-Vite HMR will update the right panel automatically on every save.
-
-### Step 4 — Visual check with Playwright
-
-After each save, screenshot the live preview and compare it with the spec:
-
-\`\`\`
-mcp__playwright__navigate http://localhost:5174
-mcp__playwright__screenshot
-\`\`\`
-
-The left panel already shows the spec screenshot for direct comparison.
-Note differences in layout, spacing, typography, colors, and component structure.
-
-### Step 5 — Iterate
-
-Edit component → Playwright screenshot → compare → repeat until the preview matches the spec.
-
-### Step 6 — Finalize
-
-\`\`\`bash
-sdd ui stop
-sdd mark-synced product/features/auth/login.md
-git add -A && git commit -m "sdd sync: implement LoginForm component"
-\`\`\`
-
-## Notes
-
-- The component file is permanent — it lives in \`code/components/\` and is part of your project
-- Port \`5174\` by default (not \`5173\`) to avoid conflicts with the user's app dev server
-- If the component needs props, scaffold it with hardcoded sample data for the preview
-
-## Troubleshooting
-
-**Playwright MCP not configured:**
-Stop and ask the user to add it to their Claude Code MCP settings before continuing.
-
-**Component import fails in preview:**
-Check that the component file has a valid default export and no TypeScript errors.
-
-**Port already in use:**
-\`sdd ui launch-editor LoginForm --screenshot login.png --port 5175\`
 `;
 
 export const SKILL_REMOTE_MD_TEMPLATE = `---
 name: sdd-remote
 description: >
-  Remote sync workflow for Story Driven Development. Use when the user asks
-  to update local state from remote changes, process remote drafts, and push
-  enriched items back. Also applies when running a remote worker job (enrich
-  or sync).
+  Remote sync workflow for Story Driven Development. Use this skill whenever
+  the user asks to pull from remote, push changes to SDD Flow, enrich drafts,
+  update local state from remote, publish local updates, process remote drafts,
+  or run a remote worker job (enrich or sync). Also trigger on phrases like
+  "sdd pull", "sdd push", "sync with SDD Flow", "enrich this CR",
+  "push the remote updates", "pull the latest specs".
 license: MIT
 compatibility: Requires sdd CLI (npm i -g @applica-software-guru/sdd)
 allowed-tools: Bash(sdd:*) Read Glob Grep
 metadata:
   author: applica-software-guru
-  version: "1.1"
+  version: "1.2"
 ---
 
-# SDD Remote - Pull, Enrich, Push
+# SDD Remote — Pull, Enrich, Push
 
 ## Purpose
 
-Use this skill to synchronize local SDD docs with remote updates, enrich draft content,
+Synchronize local SDD docs with remote updates (from the SDD Flow server), enrich draft content,
 and publish the enriched result to remote in active states.
 
-This skill also applies when a **remote worker job** is dispatched from SDD Flow, as the
-worker runs these same workflows on behalf of the user.
+This skill also applies when a **remote worker job** is dispatched from SDD Flow — the worker
+runs these same workflows on behalf of the user.
 
 ## Detection
 
 This workflow applies when:
 
-- \`.sdd/config.yaml\` exists in the project root
+- \`.sdd/config.yaml\` exists in the project root with a \`remote:\` section configured
 - The user asks to update local state from remote, pull pending CRs/bugs/docs,
   enrich drafts, or push pending remote updates
 - A remote worker job prompt instructs you to follow this workflow
 
+Before any pull/push operation, check remote configuration with \`sdd remote status\`.
+
 ## Workflows
 
-### Enrich Workflow (CR)
+### Enrich workflow — Change Request
 
-Follow this sequence to enrich a draft Change Request:
+Follow this sequence to enrich a draft CR:
 
-1. Pull remote updates:
+1. Pull remote drafts:
 
 \`\`\`bash
 sdd pull --crs-only
 \`\`\`
 
-3. Generate draft TODO list:
+2. Generate the draft TODO list:
 
 \`\`\`bash
 sdd drafts
 \`\`\`
 
-4. Enrich the draft with technical details, acceptance criteria, edge cases, and
-   any relevant information from the project documentation and comments.
+3. Enrich the draft with technical details, acceptance criteria, edge cases, and any
+   relevant information from the project documentation and comments.
 
-5. Transition the enriched CR to pending:
+4. Transition the enriched CR from \`draft\` to \`pending\`:
 
 \`\`\`bash
 sdd mark-drafts-enriched
 \`\`\`
 
-This performs: \`draft → pending\`
-
-6. Push the enriched content:
+5. Push the enriched content:
 
 \`\`\`bash
 sdd push
 \`\`\`
 
-### Enrich Workflow (Document)
+### Enrich workflow — Document
 
-Follow this sequence to enrich a document:
+Follow this sequence to enrich a document (e.g. a feature spec):
 
-1. Pull remote updates:
+1. Pull remote drafts:
 
 \`\`\`bash
 sdd pull --docs-only
 \`\`\`
 
-3. Locate the document file in \`product/\` or \`system/\` and update its content
-   with the enriched version.
+2. Locate the document file in \`product/\` or \`system/\` and update its content with the
+   enriched version.
 
-4. Push the enriched content:
+3. Push the enriched content:
 
 \`\`\`bash
 sdd push
 \`\`\`
 
-If the document was in \`draft\` status, it will transition to \`new\` on the server.
+If the document was in \`draft\` status, it transitions to \`new\` on the server.
 
-### Sync Workflow (Project-level)
+### Sync workflow — Project-level
 
-Follow this sequence for a full project sync (all pending items):
+Full project sync when the user asks for "the latest" or "pull everything and implement":
 
 1. Pull the latest specs:
 
@@ -323,10 +197,10 @@ Follow this sequence for a full project sync (all pending items):
 sdd pull
 \`\`\`
 
-3. Run the \`sdd\` skill — it handles the full loop: open bugs, pending CRs,
-   documentation sync, code implementation, mark-synced, and commit.
+2. Run the \`sdd\` skill — it handles the full loop: open bugs, pending CRs, documentation
+   sync, code implementation, mark-synced, and commit.
 
-4. Push:
+3. Push the local updates:
 
 \`\`\`bash
 sdd push
@@ -334,23 +208,22 @@ sdd push
 
 ## Rules
 
-1. Always check remote configuration before pull/push (\`sdd remote status\`)
-3. Do not use \`sdd push --all\` unless the user explicitly asks for a full reseed
-4. If pull reports conflicts, do not overwrite local files blindly; report conflicts and ask how to proceed
-5. Do not edit files inside \`.sdd/\` manually
-6. Keep status transitions explicit: enrich first, then \`sdd mark-drafts-enriched\`, then push
-7. **Always commit before pushing** when the sync workflow makes code changes
+1. Always check remote configuration before pull/push (\`sdd remote status\`). Fail gracefully if not configured.
+2. Do not use \`sdd push --all\` unless the user explicitly asks for a full reseed.
+3. If pull reports conflicts, do not overwrite local files blindly. Report the conflicts and ask how to proceed.
+4. Do not edit files inside \`.sdd/\` manually.
+5. Keep status transitions explicit: enrich first, then \`sdd mark-drafts-enriched\`, then push.
+6. **Always commit before pushing** when the sync workflow makes code changes. Push should never carry uncommitted work.
 
 ## Related commands
 
-- \`sdd remote init\`
-- \`sdd remote status\`
-- \`sdd pull\`
-- \`sdd drafts\`
-- \`sdd mark-drafts-enriched\`
-- \`sdd sync\`
-- \`sdd mark-synced\`
-- \`sdd push\`
+- \`sdd remote init\` — Configure remote for this project
+- \`sdd remote status\` — Show remote config + connectivity
+- \`sdd pull\` / \`sdd pull --crs-only\` / \`sdd pull --docs-only\`
+- \`sdd drafts\` — List draft items to enrich
+- \`sdd mark-drafts-enriched\` — Transition enriched drafts to pending
+- \`sdd sync\` / \`sdd mark-synced\` — Local sync loop (see \`sdd\` skill)
+- \`sdd push\` — Publish local updates to remote
 `;
 
 export const FILE_FORMAT_REFERENCE = `# File Format and Status Lifecycle

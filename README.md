@@ -87,11 +87,11 @@ The key difference from other spec-driven tools is scope and lifecycle: SDD cove
 
 | Package                           | Description                                            |
 | --------------------------------- | ------------------------------------------------------ |
-| `@applica-software-guru/sdd-core` | Core library — parser, prompt generator, status engine |
-| `@applica-software-guru/sdd`      | CLI tool                                               |
-| `@applica-software-guru/sdd-ui`   | Split-panel UI editor for visual component development |
-| `sdd-vscode`                      | VS Code extension                                      |
-| `sdd` (Claude Code plugin)        | Agent Skills for Claude Code — `sdd` and `sdd-ui`      |
+| `@applica-software-guru/sdd-core` | Core library — parser, prompt generator, status engine    |
+| `@applica-software-guru/sdd`      | CLI tool                                                  |
+| `@applica-software-guru/sdd-ui`   | Optional split-panel UI editor for React component dev    |
+| `sdd-vscode`                      | VS Code extension                                         |
+| `sdd` (Claude Code plugin)        | Agent Skills + slash commands + session hook for Claude   |
 
 ## Maintainers
 

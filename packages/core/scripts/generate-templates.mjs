@@ -12,7 +12,6 @@ const outFile = resolve(__dirname, "../src/scaffold/templates.generated.ts");
 
 const SKILL_MAP = [
   { file: "sdd/SKILL.md", exportName: "SKILL_MD_TEMPLATE" },
-  { file: "sdd-ui/SKILL.md", exportName: "SKILL_UI_MD_TEMPLATE" },
   { file: "sdd-remote/SKILL.md", exportName: "SKILL_REMOTE_MD_TEMPLATE" },
   { file: "sdd/references/file-format.md", exportName: "FILE_FORMAT_REFERENCE" },
   { file: "sdd/references/change-requests.md", exportName: "CHANGE_REQUESTS_REFERENCE" },

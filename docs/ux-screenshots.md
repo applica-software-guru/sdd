@@ -45,30 +45,29 @@ product/features/
 
 The SDD parser discovers all `*.md` files under `product/` and `system/` regardless of nesting depth. No configuration needed.
 
-## Visual iteration with the UI editor
+## Optional: side-by-side editor for React components
 
-When you have a screenshot and want to build the React component to match it exactly, use `sdd ui launch-editor`:
+For React projects that want a visual side-by-side editor, the optional `@applica-software-guru/sdd-ui` package provides a split-panel tool:
 
 ```bash
+# Install the optional package
+npm install -g @applica-software-guru/sdd-ui
+
+# Launch the editor
 sdd ui launch-editor LoginForm \
   --screenshot product/features/auth/login.png \
   --detach
-```
 
-This opens a split-panel editor at `http://localhost:5174`:
-- **Left panel** — your spec screenshot (with tab support for multiple screenshots)
-- **Right panel** — live React component preview with Vite HMR
-
-The agent edits `code/components/LoginForm.tsx`, takes a Playwright screenshot of the preview, compares it with the spec, and iterates until they match. See [`.claude/skills/sdd-ui/SKILL.md`](./../packages/skill/sdd-ui/SKILL.md) for the full workflow.
-
-```bash
-# Stop the editor when done
+# Stop it when done
 sdd ui stop
 ```
+
+The editor opens at `http://localhost:5174` with the spec screenshot on the left and a live React preview (Vite HMR) on the right, so you can eyeball the match as the agent iterates.
+
+This is a standalone CLI utility — not a skill. The core `sdd` workflow already implements UI components by reading the spec screenshots directly.
 
 ## Tips
 
 - Use descriptive filenames: `login-form.png` not `screen1.png`
 - Keep images next to the doc that references them
-- The coding agent can read images if it's multimodal — it will use the screenshots to understand what to implement
-- For pixel-accurate component implementation, use `sdd ui launch-editor` with the Playwright MCP for visual feedback
+- The coding agent reads images directly from the doc — no extra tooling needed for most cases

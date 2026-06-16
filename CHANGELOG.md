@@ -19,7 +19,7 @@
   - `--purge` deletes files permanently.
   - `--dry-run` previews what would be compacted without touching the filesystem.
   - Safe by design: only `applied` CRs and `resolved` bugs are touched. `draft`, `pending`, and `open` elements are never compacted.
-  - Local-only operation: the remote (SDD Flow) is not affected.
+  - Local-only operation (never calls the remote API), but the next `sdd push` will delete the corresponding entries from the remote to reflect the local state. Archived files remain available in `archive/` and in git history.
   - New `SDD.compact()` method on the core facade and new `CompactMode` / `CompactResult` types exported from `@applica-software-guru/sdd-core`.
 
 ### Documentation

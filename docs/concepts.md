@@ -64,7 +64,7 @@ draft → open → resolved      (Bug)
 - **`--purge`** — deletes the files permanently.
 - **`--dry-run`** — previews what would be compacted without touching the filesystem.
 
-`compact` is local-only: if the project is connected to SDD Flow, the remote is unaffected (the archived files simply stop appearing in future `sdd push` runs).
+compact never calls the remote API. However, the next `sdd push` will detect the missing files and delete them from the remote to reflect the local state. Archived files remain available locally in `archive/` and in git history.
 
 ```bash
 sdd compact              # archive applied CRs and resolved bugs

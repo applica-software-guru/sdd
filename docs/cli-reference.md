@@ -239,7 +239,7 @@ Options:
 
 By default, files are moved to `change-requests/archive/` and `bugs/archive/`. These subdirectories are invisible to `sdd cr list`, `sdd bug list`, and the sync prompt — so compacted elements immediately stop polluting the agent's context while remaining available in git history for traceability.
 
-`compact` is a local-only operation. If the project is connected to SDD Flow (`sdd remote`), the remote is not affected — archived files will simply stop appearing in future `sdd push` runs.
+compact never calls the remote API directly. However, the next `sdd push` after compact will detect the missing files and **delete** the corresponding entries from the remote to keep it aligned with the local state. This is intentional: the remote reflects the current local structure, not an archive. Archived files remain available locally in `archive/` and in git history.
 
 ## Preflight
 

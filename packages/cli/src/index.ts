@@ -17,6 +17,7 @@ import { registerPull } from "./commands/pull.js";
 import { registerPush } from "./commands/push.js";
 import { registerDrafts } from "./commands/drafts.js";
 import { registerMarkDraftsEnriched } from "./commands/mark-drafts-enriched.js";
+import { registerCompact } from "./commands/compact.js";
 
 const packageRequire = createRequire(__filename);
 const packageJson = packageRequire("../package.json") as { version: string };
@@ -44,6 +45,7 @@ registerPull(program);
 registerPush(program);
 registerDrafts(program);
 registerMarkDraftsEnriched(program);
+registerCompact(program);
 
 program.parseAsync().catch((err) => {
   console.error(err.message);

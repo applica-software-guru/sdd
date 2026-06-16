@@ -54,6 +54,26 @@ draft → open → resolved      (Bug)
 - **Draft enrichment**: a `draft` entity has a basic description but lacks technical detail. Use `sdd drafts` to see pending drafts and `sdd mark-drafts-enriched` to transition them once enriched. With a remote worker, click **Enrich on Worker** to let an agent do this automatically.
 - See [Change Requests](change-requests.md) and [Bugs](bugs.md) for complete workflow details.
 
+### Compacting closed elements
+
+`applied` CRs and `resolved` bugs are **terminal states**: their work has already been folded into the documentation or the codebase, so the request file itself is no longer needed for the project to stay consistent. They do, however, accumulate over time and add noise to `cr list`, `bug list`, and the agent's context.
+
+`sdd compact` clears them out without affecting the current state of the project:
+
+- **default (archive)** — moves them to `change-requests/archive/` and `bugs/archive/`. These subdirectories are invisible to the parsers (which glob `*.md` non-recursively), so compacted elements immediately drop out of every command and the sync prompt, while remaining on disk and in git history.
+- **`--purge`** — deletes the files permanently.
+- **`--dry-run`** — previews what would be compacted without touching the filesystem.
+
+`compact` is local-only: if the project is connected to SDD Flow, the remote is unaffected (the archived files simply stop appearing in future `sdd push` runs).
+
+```bash
+sdd compact              # archive applied CRs and resolved bugs
+sdd compact --dry-run    # preview only
+sdd compact --purge      # delete permanently
+```
+
+Safe by design: only `applied` and `resolved` elements are touched. `draft`, `pending`, and `open` are never compacted.
+
 ## Frontmatter
 
 Every `.md` file in `product/` and `system/` starts with YAML frontmatter:
@@ -134,7 +154,9 @@ my-project/
     interfaces.md
   code/                     # all generated source code
   change-requests/          # change requests
+    archive/                # applied CRs (after sdd compact, invisible to commands)
   bugs/                     # bug reports
+    archive/                # resolved bugs (after sdd compact, invisible to commands)
   .claude/skills/sdd/
     SKILL.md              # agent skill file (auto-generated)
 ```

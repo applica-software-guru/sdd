@@ -86,6 +86,15 @@ export interface ChangeRequest {
 
 export type BugStatus = 'draft' | 'open' | 'resolved';
 
+export type CompactMode = 'archive' | 'purge';
+
+export interface CompactResult {
+  mode: CompactMode;
+  dryRun: boolean;
+  changeRequests: string[];
+  bugs: string[];
+}
+
 export interface BugFrontmatter {
   title: string;
   status: BugStatus;

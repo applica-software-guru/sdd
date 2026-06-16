@@ -68,6 +68,9 @@ sdd mark-cr-applied
 
 # Convert draft CRs to pending after enrichment
 sdd mark-drafts-enriched change-requests/CR-001.md
+
+# Archive applied CRs to keep the project lean
+sdd compact
 ```
 
 ## Naming convention

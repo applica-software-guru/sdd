@@ -64,6 +64,7 @@ Every mark-synced MUST be followed by a commit in the same turn. No exceptions. 
 - `sdd mark-synced [files...]` — Mark files (or all) as synced
 - `sdd cr list` / `sdd cr pending` / `sdd mark-cr-applied [files...]`
 - `sdd bug list` / `sdd bug open` / `sdd mark-bug-resolved [files...]`
+- `sdd compact [--purge] [--dry-run]` — Archive (default) or delete (`--purge`) applied CRs and resolved bugs
 
 ## Rules
 

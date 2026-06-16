@@ -27,3 +27,4 @@ created-at: "2025-01-01T00:00:00.000Z"
 - `sdd bug list` — See all bugs and their status
 - `sdd bug open` — Show only open bugs to fix
 - `sdd mark-bug-resolved [files...]` — Mark bugs as resolved after fixing
+- `sdd compact [--purge] [--dry-run]` — Archive (or delete with `--purge`) resolved bugs to keep the project lean. Only touches `resolved` bugs.

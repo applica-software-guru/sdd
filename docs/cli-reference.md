@@ -213,6 +213,34 @@ sdd mark-bug-resolved bugs/BUG-001.md
 sdd mark-bug-resolved
 ```
 
+## Compact
+
+### `sdd compact [--purge] [--dry-run]`
+
+Archive or delete closed change requests (status `applied`) and bugs (status `resolved`) to keep the project lean. Terminal elements accumulate over time and add noise to `cr list` / `bug list` and to agent context — `compact` clears them out.
+
+Only touches CRs with `status: applied` and bugs with `status: resolved`. Never touches `draft`, `pending`, or `open` elements.
+
+```bash
+# Archive closed elements (default) — moves to change-requests/archive/ and bugs/archive/
+sdd compact
+
+# Preview what would be compacted without writing anything
+sdd compact --dry-run
+
+# Delete permanently instead of archiving
+sdd compact --purge
+```
+
+Options:
+
+- `--purge` — delete files permanently instead of moving them to `archive/`
+- `--dry-run` — print what would happen, do not touch the filesystem
+
+By default, files are moved to `change-requests/archive/` and `bugs/archive/`. These subdirectories are invisible to `sdd cr list`, `sdd bug list`, and the sync prompt — so compacted elements immediately stop polluting the agent's context while remaining available in git history for traceability.
+
+`compact` is a local-only operation. If the project is connected to SDD Flow (`sdd remote`), the remote is not affected — archived files will simply stop appearing in future `sdd push` runs.
+
 ## Remote sync
 
 For full details, see [Remote Sync](remote-sync.md).

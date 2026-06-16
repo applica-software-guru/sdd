@@ -1,6 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
-import type { StoryStatus, ValidationResult, SDDConfig, ChangeRequest, Bug } from "./types.js";
+import { resolve, basename } from "node:path";
+import type { StoryStatus, ValidationResult, SDDConfig, ChangeRequest, Bug, CompactMode, CompactResult } from "./types.js";
 import { ProjectNotInitializedError } from "./errors.js";
 import { parseAllStoryFiles } from "./parser/story-parser.js";
 import { generatePrompt } from "./prompt/prompt-generator.js";
@@ -168,6 +168,54 @@ export class SDD {
     }
 
     return marked;
+  }
+
+  // ── Compact ─────────────────────────────────────────────────────────
+
+  async compact(options?: { mode?: CompactMode; dryRun?: boolean }): Promise<CompactResult> {
+    this.ensureInitialized();
+    const mode: CompactMode = options?.mode ?? "archive";
+    const dryRun = options?.dryRun ?? false;
+
+    const { rename, rm, mkdir } = await import("node:fs/promises");
+
+    const result: CompactResult = { mode, dryRun, changeRequests: [], bugs: [] };
+
+    const processEntity = async (
+      relativePath: string,
+      archiveDir: string,
+    ): Promise<void> => {
+      const srcAbs = resolve(this.root, relativePath);
+      const archiveAbs = resolve(this.root, archiveDir);
+      const destAbs = resolve(archiveAbs, basename(relativePath));
+
+      if (dryRun) return;
+
+      if (mode === "purge") {
+        await rm(srcAbs);
+      } else {
+        await mkdir(archiveAbs, { recursive: true });
+        await rename(srcAbs, destAbs);
+      }
+    };
+
+    // CR applied → change-requests/archive/
+    const crs = await this.changeRequests();
+    for (const cr of crs) {
+      if (cr.frontmatter.status !== "applied") continue;
+      result.changeRequests.push(cr.relativePath);
+      await processEntity(cr.relativePath, "change-requests/archive");
+    }
+
+    // Bugs resolved → bugs/archive/
+    const bugs = await this.bugs();
+    for (const bug of bugs) {
+      if (bug.frontmatter.status !== "resolved") continue;
+      result.bugs.push(bug.relativePath);
+      await processEntity(bug.relativePath, "bugs/archive");
+    }
+
+    return result;
   }
 
   // ── Drafts ───────────────────────────────────────────────────────────

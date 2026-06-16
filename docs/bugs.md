@@ -71,6 +71,9 @@ sdd mark-bug-resolved bugs/BUG-001.md
 
 # Mark all open bugs as resolved
 sdd mark-bug-resolved
+
+# Archive resolved bugs to keep the project lean
+sdd compact
 ```
 
 ## Naming convention

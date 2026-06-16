@@ -28,3 +28,4 @@ created-at: "2025-01-01T00:00:00.000Z"
 - `sdd cr list` — See all change requests and their status
 - `sdd cr pending` — Show only pending CRs to process
 - `sdd mark-cr-applied [files...]` — Mark CRs as applied after updating the docs
+- `sdd compact [--purge] [--dry-run]` — Archive (or delete with `--purge`) applied CRs to keep the project lean. Only touches `applied` CRs.

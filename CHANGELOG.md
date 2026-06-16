@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.9.1 (2026-06-16)
+
+### Added
+
+- **`sdd compact` command**: archive or delete closed change requests (`status: applied`) and bugs (`status: resolved`) to keep the project lean. Terminal elements accumulate over time and add noise to `cr list`, `bug list`, and the agent's context — `compact` clears them without affecting the current documentation or code.
+  - Default mode **archives** files to `change-requests/archive/` and `bugs/archive/`. These subdirectories are invisible to the existing parsers (the `*.md` glob does not recurse), so compacted elements immediately drop out of every command and the sync prompt while remaining on disk and in git history.
+  - `--purge` deletes files permanently.
+  - `--dry-run` previews what would be compacted without touching the filesystem.
+  - Safe by design: only `applied` CRs and `resolved` bugs are touched. `draft`, `pending`, and `open` elements are never compacted.
+  - Local-only operation: the remote (SDD Flow) is not affected.
+  - New `SDD.compact()` method on the core facade and new `CompactMode` / `CompactResult` types exported from `@applica-software-guru/sdd-core`.
+
+### Documentation
+
+- New "Compacting closed elements" section in `docs/concepts.md` explaining the lifecycle and the archive subdirectories
+- Updated `docs/cli-reference.md`, `docs/change-requests.md`, and `docs/bugs.md` with the new command
+- Project structure in `docs/concepts.md` now shows the `archive/` subdirectories
+
+---
+
 ## 1.9.0 (2026-04-19)
 
 ### Removed

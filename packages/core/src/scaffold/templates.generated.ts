@@ -67,6 +67,7 @@ Every mark-synced MUST be followed by a commit in the same turn. No exceptions. 
 - \`sdd mark-synced [files...]\` — Mark files (or all) as synced
 - \`sdd cr list\` / \`sdd cr pending\` / \`sdd mark-cr-applied [files...]\`
 - \`sdd bug list\` / \`sdd bug open\` / \`sdd mark-bug-resolved [files...]\`
+- \`sdd compact [--purge] [--dry-run]\` — Archive (default) or delete (\`--purge\`) applied CRs and resolved bugs
 
 ## Rules
 
@@ -323,6 +324,7 @@ created-at: "2025-01-01T00:00:00.000Z"
 - \`sdd cr list\` — See all change requests and their status
 - \`sdd cr pending\` — Show only pending CRs to process
 - \`sdd mark-cr-applied [files...]\` — Mark CRs as applied after updating the docs
+- \`sdd compact [--purge] [--dry-run]\` — Archive (or delete with \`--purge\`) applied CRs to keep the project lean. Only touches \`applied\` CRs.
 `;
 
 export const BUGS_REFERENCE = `# Bugs
@@ -354,4 +356,5 @@ created-at: "2025-01-01T00:00:00.000Z"
 - \`sdd bug list\` — See all bugs and their status
 - \`sdd bug open\` — Show only open bugs to fix
 - \`sdd mark-bug-resolved [files...]\` — Mark bugs as resolved after fixing
+- \`sdd compact [--purge] [--dry-run]\` — Archive (or delete with \`--purge\`) resolved bugs to keep the project lean. Only touches \`resolved\` bugs.
 `;

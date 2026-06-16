@@ -59,6 +59,7 @@ You write the Story    →    SDD detects changes    →    Agent implements cod
 3. **`sdd sync`** generates a structured prompt with what needs to be implemented
 4. **The agent implements** what the documentation describes
 5. **`sdd mark-synced`** marks files as done, then you commit
+6. **`sdd compact`** archives applied change requests and resolved bugs so the project stays lean
 
 ## SDD and Spec-Driven Development
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **`sdd preflight` command**: pre-flight check that aggregates the four signals a developer (or CI) needs before claiming a project is clean: documentation validation (cross-references, frontmatter), transient docs (`new`/`changed`/`deleted`), abandoned drafts (docs/CRs/bugs), pending change requests, and open bugs. Prints a single readable report and exits non-zero if anything is pending — designed to compose with `compact` (`sdd preflight && sdd compact`), to run before `sdd sync`, or to gate a PR in CI.
+  - `--no-validate` skips the documentation validation step if you only care about state.
+  - New `SDD.preflight()` method on the core facade and new `PreflightResult` type exported from `@applica-software-guru/sdd-core`.
+
+---
+
 ## 1.9.1 (2026-06-16)
 
 ### Added

@@ -18,6 +18,7 @@ export type {
   BugStatus,
   CompactMode,
   CompactResult,
+  PreflightResult,
   RemoteConfig,
 } from "./types.js";
 export { SDDError, LockFileNotFoundError, ParseError, ProjectNotInitializedError, RemoteError, RemoteNotConfiguredError, RemoteTimeoutError } from "./errors.js";

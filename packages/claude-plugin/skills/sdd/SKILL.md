@@ -65,6 +65,7 @@ Every mark-synced MUST be followed by a commit in the same turn. No exceptions. 
 - `sdd cr list` / `sdd cr pending` / `sdd mark-cr-applied [files...]`
 - `sdd bug list` / `sdd bug open` / `sdd mark-bug-resolved [files...]`
 - `sdd compact [--purge] [--dry-run]` — Archive (default) or delete (`--purge`) applied CRs and resolved bugs
+- `sdd preflight [--no-validate]` — Pre-flight check: validation + transient docs + drafts + pending CRs + open bugs. Exits non-zero if anything is pending.
 
 ## Rules
 

@@ -74,6 +74,17 @@ sdd compact --purge      # delete permanently
 
 Safe by design: only `applied` and `resolved` elements are touched. `draft`, `pending`, and `open` are never compacted.
 
+### Preflight check
+
+`applied` and `resolved` are not the only thing worth checking before declaring a project "done for now". `sdd preflight` aggregates the four signals that matter:
+
+1. **Documentation validation** (cross-references, frontmatter)
+2. **Transient docs** — `new`, `changed`, `deleted` (specs not yet implemented in code)
+3. **Abandoned drafts** — docs, CRs, or bugs still in `draft`
+4. **Pending CRs** and **open bugs**
+
+It prints a single report and exits non-zero if anything is pending. It is the natural gate before `compact` (`sdd preflight && sdd compact`), before `sdd sync`, or as a CI check on a PR.
+
 ## Frontmatter
 
 Every `.md` file in `product/` and `system/` starts with YAML frontmatter:

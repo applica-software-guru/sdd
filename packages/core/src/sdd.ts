@@ -1,6 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve, basename } from "node:path";
-import type { StoryStatus, ValidationResult, SDDConfig, ChangeRequest, Bug, CompactMode, CompactResult } from "./types.js";
+import type { StoryStatus, ValidationResult, SDDConfig, ChangeRequest, Bug, CompactMode, CompactResult, PreflightResult } from "./types.js";
 import { ProjectNotInitializedError } from "./errors.js";
 import { parseAllStoryFiles } from "./parser/story-parser.js";
 import { generatePrompt } from "./prompt/prompt-generator.js";
@@ -216,6 +216,34 @@ export class SDD {
     }
 
     return result;
+  }
+
+  // ── Preflight ───────────────────────────────────────────────────────
+
+  async preflight(): Promise<PreflightResult> {
+    this.ensureInitialized();
+    const [validation, files, drafts, pendingCRs, openBugs] = await Promise.all([
+      this.validate(),
+      parseAllStoryFiles(this.root),
+      this.drafts(),
+      this.pendingChangeRequests(),
+      this.openBugs(),
+    ]);
+
+    const transientDocs = files.filter(
+      (f) => f.frontmatter.status === "new" || f.frontmatter.status === "changed" || f.frontmatter.status === "deleted",
+    );
+
+    const clean =
+      validation.valid &&
+      transientDocs.length === 0 &&
+      drafts.docs.length === 0 &&
+      drafts.crs.length === 0 &&
+      drafts.bugs.length === 0 &&
+      pendingCRs.length === 0 &&
+      openBugs.length === 0;
+
+    return { validation, transientDocs, drafts, pendingCRs, openBugs, clean };
   }
 
   // ── Drafts ───────────────────────────────────────────────────────────

@@ -95,6 +95,15 @@ export interface CompactResult {
   bugs: string[];
 }
 
+export interface PreflightResult {
+  validation: ValidationResult;
+  transientDocs: StoryFile[];
+  drafts: { docs: StoryFile[]; crs: ChangeRequest[]; bugs: Bug[] };
+  pendingCRs: ChangeRequest[];
+  openBugs: Bug[];
+  clean: boolean;
+}
+
 export interface BugFrontmatter {
   title: string;
   status: BugStatus;

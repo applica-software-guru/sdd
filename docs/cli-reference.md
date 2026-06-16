@@ -241,6 +241,33 @@ By default, files are moved to `change-requests/archive/` and `bugs/archive/`. T
 
 `compact` is a local-only operation. If the project is connected to SDD Flow (`sdd remote`), the remote is not affected — archived files will simply stop appearing in future `sdd push` runs.
 
+## Preflight
+
+### `sdd preflight [--no-validate]`
+
+Run a pre-flight check that aggregates everything that needs attention before the project can be considered "clean":
+
+1. **Documentation validation** — broken `[[Entity]]` cross-references and frontmatter issues (same checks as `sdd validate`)
+2. **Transient docs** — files in status `new`, `changed`, or `deleted` (spec changes not yet implemented in code)
+3. **Abandoned drafts** — docs, CRs, and bugs still in status `draft` (never enriched)
+4. **Pending change requests** — CRs in status `pending` (need to be applied to the docs)
+5. **Open bugs** — bugs in status `open` (need to be fixed)
+
+```bash
+sdd preflight               # full check
+sdd preflight --no-validate # skip cross-reference validation
+```
+
+Exits with code `0` if everything is clean, `1` if any check has pending items. Designed to:
+
+- Compose with `compact`: `sdd preflight && sdd compact`
+- Run before `sdd sync` to catch unresolved work
+- Gate a PR in CI: `sdd preflight` as a required check
+
+Options:
+
+- `--no-validate` — skip the documentation validation step (useful when you only care about the state of CRs/bugs/docs)
+
 ## Remote sync
 
 For full details, see [Remote Sync](remote-sync.md).

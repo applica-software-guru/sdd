@@ -60,6 +60,7 @@ You write the Story    →    SDD detects changes    →    Agent implements cod
 4. **The agent implements** what the documentation describes
 5. **`sdd mark-synced`** marks files as done, then you commit
 6. **`sdd compact`** archives applied change requests and resolved bugs so the project stays lean
+7. **`sdd preflight`** is the gate before compacting, syncing, or merging — checks validation, transient docs, drafts, pending CRs, open bugs
 
 ## SDD and Spec-Driven Development
 

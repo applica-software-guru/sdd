@@ -1,6 +1,6 @@
 {
   "name": "@applica-software-guru/sdd-ui",
-  "version": "1.9.4",
+  "version": "1.9.5",
   "description": "UI Component Editor for SDD projects",
   "scripts": {
     "dev": "vite",

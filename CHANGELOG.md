@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.9.5 (2026-07-17)
+
+### Fixed
+
+- **`sdd pull` no longer deletes local doc files when the remote is reset externally**: previously, if the remote project was wiped via the web UI (or any method that didn't go through `sdd remote reset --confirm`), the local `remote-state.json` still held the old document IDs. A subsequent `sdd pull` would see all tracked documents absent from the remote response and delete every local file. The fix mirrors the 1.9.3 approach used for CRs and bugs: a new `GET /cli/deleted-doc-ids` endpoint returns only IDs of documents explicitly marked `status=deleted`; `pull` only removes a local file if its remote ID appears in that list. Documents absent from remote for any other reason (reset, compaction, etc.) are silently de-tracked from state and their local files are preserved. Requires the companion backend update in SDD Flow (new endpoint `GET /cli/deleted-doc-ids`).
+
+---
+
 ## 1.9.4 (2026-07-17)
 
 ### Fixed

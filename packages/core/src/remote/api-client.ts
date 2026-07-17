@@ -184,6 +184,11 @@ export async function pullPendingCRs(config: ApiClientConfig): Promise<RemoteCRR
   return request<RemoteCRResponse[]>(config, 'GET', '/cli/pending-crs');
 }
 
+/** GET /cli/deleted-doc-ids */
+export async function pullDeletedDocIds(config: ApiClientConfig): Promise<string[]> {
+  return request<string[]>(config, 'GET', '/cli/deleted-doc-ids');
+}
+
 /** GET /cli/deleted-cr-ids */
 export async function pullDeletedCRIds(config: ApiClientConfig): Promise<string[]> {
   return request<string[]>(config, 'GET', '/cli/deleted-cr-ids');

@@ -8,7 +8,7 @@ import { readConfig } from '../config/config-manager.js';
 import { parseAllStoryFiles } from '../parser/story-parser.js';
 import { parseAllCRFiles } from '../parser/cr-parser.js';
 import { parseAllBugFiles } from '../parser/bug-parser.js';
-import { buildApiConfig, pullDocs, pushDocs, pushCRs, pushBugs, deleteDocs, deleteCRs, deleteBugs, pullPendingCRs, pullOpenBugs, pullDeletedCRIds, pullDeletedBugIds, resetProject } from './api-client.js';
+import { buildApiConfig, pullDocs, pushDocs, pushCRs, pushBugs, deleteDocs, deleteCRs, deleteBugs, pullPendingCRs, pullOpenBugs, pullDeletedDocIds, pullDeletedCRIds, pullDeletedBugIds, resetProject } from './api-client.js';
 import { readRemoteState, writeRemoteState } from './state.js';
 import type {
   PushResult,
@@ -332,29 +332,35 @@ export async function pullFromRemote(root: string, timeout?: number): Promise<Pu
   const deleted: string[] = [];
   const conflicts: PullConflict[] = [];
 
-  // Detect remote deletions: tracked locally but not in remote response
+  // Detect remote deletions: distinguish explicitly deleted from reset/compacted
   const remotePathSet = new Set(remoteDocs.map((d) => d.path));
+  const remoteDocIdSet = new Set(remoteDocs.map((d) => d.id));
+  const deletedDocIdSet = new Set(await pullDeletedDocIds(api));
+
   for (const [localPath, tracked] of Object.entries(state.documents)) {
-    if (!remotePathSet.has(localPath)) {
-      // File was deleted on remote — check if locally modified
-      const absPath = resolve(root, localPath);
-      if (existsSync(absPath)) {
-        const localRaw = await readFile(absPath, 'utf-8');
-        const localHash = sha256(localRaw);
-        if (localHash !== tracked.localHash) {
-          // Locally modified but deleted on remote → conflict
-          conflicts.push({
-            path: localPath,
-            localVersion: tracked.remoteVersion.toString(),
-            remoteVersion: 0,
-            reason: 'File modified locally but deleted on remote',
-          });
-        } else {
-          // Not modified locally → safe to delete
-          await unlink(absPath);
-          deleted.push(localPath);
+    if (!remotePathSet.has(localPath) && !remoteDocIdSet.has(tracked.remoteId)) {
+      if (deletedDocIdSet.has(tracked.remoteId)) {
+        // Explicitly deleted on remote → remove local file if unmodified
+        const absPath = resolve(root, localPath);
+        if (existsSync(absPath)) {
+          const localRaw = await readFile(absPath, 'utf-8');
+          const localHash = sha256(localRaw);
+          if (localHash !== tracked.localHash) {
+            // Locally modified but deleted on remote → conflict
+            conflicts.push({
+              path: localPath,
+              localVersion: tracked.remoteVersion.toString(),
+              remoteVersion: 0,
+              reason: 'File modified locally but deleted on remote',
+            });
+          } else {
+            // Not modified locally → safe to delete
+            await unlink(absPath);
+            deleted.push(localPath);
+          }
         }
       }
+      // Explicitly deleted or absent (e.g. after remote reset): always de-track
       delete state.documents[localPath];
     }
   }

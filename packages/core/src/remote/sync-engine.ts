@@ -460,7 +460,7 @@ export async function pullCRsFromRemote(root: string, timeout?: number): Promise
   for (const [localPath, tracked] of Object.entries(state.changeRequests)) {
     if (!remoteCRIdSet.has(tracked.remoteId)) {
       if (deletedCRIdSet.has(tracked.remoteId)) {
-        // Explicitly deleted on remote → remove local file if unmodified
+        // Explicitly deleted on remote → remove local file if unmodified, then de-track
         const absPath = resolve(root, localPath);
         if (existsSync(absPath)) {
           const localRaw = await readFile(absPath, 'utf-8');
@@ -469,9 +469,9 @@ export async function pullCRsFromRemote(root: string, timeout?: number): Promise
             deletedCount++;
           }
         }
+        delete state.changeRequests![localPath];
       }
-      // Applied/resolved or deleted: always de-track
-      delete state.changeRequests![localPath];
+      // Applied/resolved but not deleted: keep state entry so push doesn't re-create them
     }
   }
 
@@ -556,7 +556,7 @@ export async function pullBugsFromRemote(root: string, timeout?: number): Promis
   for (const [localPath, tracked] of Object.entries(state.bugs)) {
     if (!remoteBugIdSet.has(tracked.remoteId)) {
       if (deletedBugIdSet.has(tracked.remoteId)) {
-        // Explicitly deleted on remote → remove local file if unmodified
+        // Explicitly deleted on remote → remove local file if unmodified, then de-track
         const absPath = resolve(root, localPath);
         if (existsSync(absPath)) {
           const localRaw = await readFile(absPath, 'utf-8');
@@ -565,9 +565,9 @@ export async function pullBugsFromRemote(root: string, timeout?: number): Promis
             deletedCount++;
           }
         }
+        delete state.bugs![localPath];
       }
-      // Resolved or deleted: always de-track
-      delete state.bugs![localPath];
+      // Resolved but not deleted: keep state entry so push doesn't re-create them
     }
   }
 

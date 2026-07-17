@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.9.8 (2026-07-17)
+
+### Fixed
+
+- **`sdd pull` no longer causes `sdd push` to duplicate applied CRs and resolved bugs**: previously, `pullCRsFromRemote` and `pullBugsFromRemote` unconditionally removed applied/resolved entities from `remote-state.json` whenever they were absent from the remote pending/open list. On the next `sdd push`, those entities had no tracked `remoteId`, so the CLI pushed them again as new records — creating duplicates on remote. The fix scopes de-tracking to only entities that appear in the `deleted-cr-ids` / `deleted-bug-ids` lists; applied/resolved entities stay tracked in state so push recognises their hash and skips them.
+
+---
+
 ## 1.9.7 (2026-07-17)
 
 ### Fixed

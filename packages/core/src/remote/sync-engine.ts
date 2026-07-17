@@ -476,7 +476,7 @@ export async function pullCRsFromRemote(root: string, timeout?: number): Promise
   }
 
   for (const cr of remoteCRs) {
-    const localPath = cr.path ?? idToPath.get(cr.id) ?? `change-requests/CR-${cr.id.substring(0, 8)}.md`;
+    const localPath = cr.path ?? idToPath.get(cr.id) ?? `change-requests/${String(cr.number).padStart(3, '0')}-${cr.slug}.md`;
     const absPath = resolve(root, localPath);
     const dir = dirname(absPath);
     if (!existsSync(dir)) {
@@ -571,7 +571,7 @@ export async function pullBugsFromRemote(root: string, timeout?: number): Promis
   }
 
   for (const bug of remoteBugs) {
-    const localPath = bug.path ?? idToPath.get(bug.id) ?? `bugs/BUG-${bug.id.substring(0, 8)}.md`;
+    const localPath = bug.path ?? idToPath.get(bug.id) ?? `bugs/${String(bug.number).padStart(3, '0')}-${bug.slug}.md`;
     const absPath = resolve(root, localPath);
     const dir = dirname(absPath);
     if (!existsSync(dir)) {

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.9.6 (2026-07-17)
+
+### Fixed
+
+- **`sdd pull` now uses the human-readable slug for CRs and bugs created on remote**: previously, change requests and bugs created via the web UI (with no local path set) were pulled down with a generated filename like `CR-6e993d4c.md` or `BUG-6e993d4c.md` (first 8 chars of the UUID). The fix reads the `number` and `slug` fields already present in the API response and uses them to derive the standard filename format `change-requests/NNN-slug.md` / `bugs/NNN-slug.md`, matching what the CLI would produce when creating those files locally.
+
+---
+
 ## 1.9.5 (2026-07-17)
 
 ### Fixed

@@ -81,6 +81,13 @@ jobs:
           npm run build --workspace @applica-software-guru/sdd-core
           npm run build --workspace @applica-software-guru/sdd
 
+      - name: Pin sdd-core exact version in CLI before publish
+        shell: bash
+        run: |
+          TARGET_VERSION="${{ needs.resolve-version.outputs.version }}"
+          npm pkg set "dependencies.@applica-software-guru/sdd-core=$TARGET_VERSION" \
+            --workspace @applica-software-guru/sdd
+
       - name: Publish workspaces to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

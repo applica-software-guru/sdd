@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.9.4 (2026-07-17)
+
+### Fixed
+
+- **Homebrew install now gets the correct sdd-core version**: the CI workflow now pins `sdd-core` to the exact release version in `packages/cli/package.json` before publishing to npm. Previously, the loose `^1.9.0` range could resolve to an older sdd-core when Homebrew built the package at the same time as the npm publish, causing the installed CLI to use outdated sync logic.
+
+---
+
 ## 1.9.3 (2026-07-17)
 
 ### Fixed

@@ -476,7 +476,8 @@ export async function pullCRsFromRemote(root: string, timeout?: number): Promise
   }
 
   for (const cr of remoteCRs) {
-    const localPath = cr.path ?? idToPath.get(cr.id) ?? `change-requests/${String(cr.number).padStart(3, '0')}-${cr.slug}.md`;
+    const isLegacyPath = cr.path != null && /\/CR-[0-9a-f]{8}\.md$/.test(cr.path);
+    const localPath = (!cr.path || isLegacyPath ? idToPath.get(cr.id) : cr.path) ?? `change-requests/${String(cr.number).padStart(3, '0')}-${cr.slug}.md`;
     const absPath = resolve(root, localPath);
     const dir = dirname(absPath);
     if (!existsSync(dir)) {
@@ -571,7 +572,8 @@ export async function pullBugsFromRemote(root: string, timeout?: number): Promis
   }
 
   for (const bug of remoteBugs) {
-    const localPath = bug.path ?? idToPath.get(bug.id) ?? `bugs/${String(bug.number).padStart(3, '0')}-${bug.slug}.md`;
+    const isLegacyPath = bug.path != null && /\/BUG-[0-9a-f]{8}\.md$/.test(bug.path);
+    const localPath = (!bug.path || isLegacyPath ? idToPath.get(bug.id) : bug.path) ?? `bugs/${String(bug.number).padStart(3, '0')}-${bug.slug}.md`;
     const absPath = resolve(root, localPath);
     const dir = dirname(absPath);
     if (!existsSync(dir)) {

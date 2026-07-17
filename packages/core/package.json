@@ -1,6 +1,6 @@
 {
   "name": "@applica-software-guru/sdd-core",
-  "version": "1.9.6",
+  "version": "1.9.7",
   "description": "Core library for Story Driven Development",
   "author": "Bruno Fortunato <bruno.fortunato@applica.guru>",
   "main": "dist/index.js",

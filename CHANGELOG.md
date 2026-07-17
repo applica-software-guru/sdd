@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.9.7 (2026-07-17)
+
+### Fixed
+
+- **`sdd pull` migrates legacy `CR-{hex8}.md` / `BUG-{hex8}.md` filenames to slug-based names**: extends the 1.9.6 fix to handle entities that were already pulled with the old generated filename and pushed back (setting that bad path on remote). Pull now detects paths matching the legacy pattern and treats them as unset, deriving the standard `NNN-slug.md` name from the `number` and `slug` fields. On the next `sdd push`, the old remote path is deleted and the new one is created.
+
+---
+
 ## 1.9.6 (2026-07-17)
 
 ### Fixed

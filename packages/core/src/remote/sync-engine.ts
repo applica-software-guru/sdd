@@ -8,7 +8,7 @@ import { readConfig } from '../config/config-manager.js';
 import { parseAllStoryFiles } from '../parser/story-parser.js';
 import { parseAllCRFiles } from '../parser/cr-parser.js';
 import { parseAllBugFiles } from '../parser/bug-parser.js';
-import { buildApiConfig, pullDocs, pushDocs, pushCRs, pushBugs, deleteDocs, deleteCRs, deleteBugs, pullPendingCRs, pullOpenBugs, resetProject } from './api-client.js';
+import { buildApiConfig, pullDocs, pushDocs, pushCRs, pushBugs, deleteDocs, deleteCRs, deleteBugs, pullPendingCRs, pullOpenBugs, pullDeletedCRIds, pullDeletedBugIds, resetProject } from './api-client.js';
 import { readRemoteState, writeRemoteState } from './state.js';
 import type {
   PushResult,
@@ -447,19 +447,24 @@ export async function pullCRsFromRemote(root: string, timeout?: number): Promise
   let updated = 0;
   let deletedCount = 0;
 
-  // Detect remote deletions: tracked locally but not in remote response
+  // Detect remote deletions: distinguish explicitly deleted from applied/resolved
   const remoteCRIdSet = new Set(remoteCRs.map((cr) => cr.id));
+  const deletedCRIdSet = new Set(await pullDeletedCRIds(api));
+
   for (const [localPath, tracked] of Object.entries(state.changeRequests)) {
     if (!remoteCRIdSet.has(tracked.remoteId)) {
-      const absPath = resolve(root, localPath);
-      if (existsSync(absPath)) {
-        const localRaw = await readFile(absPath, 'utf-8');
-        const localHash = sha256(localRaw);
-        if (localHash === tracked.localHash) {
-          await unlink(absPath);
-          deletedCount++;
+      if (deletedCRIdSet.has(tracked.remoteId)) {
+        // Explicitly deleted on remote → remove local file if unmodified
+        const absPath = resolve(root, localPath);
+        if (existsSync(absPath)) {
+          const localRaw = await readFile(absPath, 'utf-8');
+          if (sha256(localRaw) === tracked.localHash) {
+            await unlink(absPath);
+            deletedCount++;
+          }
         }
       }
+      // Applied/resolved or deleted: always de-track
       delete state.changeRequests![localPath];
     }
   }
@@ -537,19 +542,24 @@ export async function pullBugsFromRemote(root: string, timeout?: number): Promis
   let updated = 0;
   let deletedCount = 0;
 
-  // Detect remote deletions: tracked locally but not in remote response
+  // Detect remote deletions: distinguish explicitly deleted from resolved
   const remoteBugIdSet = new Set(remoteBugs.map((b) => b.id));
+  const deletedBugIdSet = new Set(await pullDeletedBugIds(api));
+
   for (const [localPath, tracked] of Object.entries(state.bugs)) {
     if (!remoteBugIdSet.has(tracked.remoteId)) {
-      const absPath = resolve(root, localPath);
-      if (existsSync(absPath)) {
-        const localRaw = await readFile(absPath, 'utf-8');
-        const localHash = sha256(localRaw);
-        if (localHash === tracked.localHash) {
-          await unlink(absPath);
-          deletedCount++;
+      if (deletedBugIdSet.has(tracked.remoteId)) {
+        // Explicitly deleted on remote → remove local file if unmodified
+        const absPath = resolve(root, localPath);
+        if (existsSync(absPath)) {
+          const localRaw = await readFile(absPath, 'utf-8');
+          if (sha256(localRaw) === tracked.localHash) {
+            await unlink(absPath);
+            deletedCount++;
+          }
         }
       }
+      // Resolved or deleted: always de-track
       delete state.bugs![localPath];
     }
   }

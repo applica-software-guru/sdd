@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.9.3 (2026-07-17)
+
+### Fixed
+
+- **Pull no longer deletes local CR and bug files when they are applied/resolved on remote**: previously, `sdd pull` treated any CR/bug absent from the `/cli/pending-crs` or `/cli/open-bugs` response as "deleted on remote", causing mass local file deletion for all closed items. The fix distinguishes between explicitly deleted entities (`status: deleted`) and closed ones (`status: applied` / `status: resolved`): only truly deleted items remove the local file; applied/resolved items are de-tracked from state but the file is preserved as a local archive. Requires the companion backend update in SDD Flow (two new endpoints: `GET /cli/deleted-cr-ids` and `GET /cli/deleted-bug-ids`).
+
+---
+
 ## 1.9.2 (2026-06-16)
 
 ### Added
